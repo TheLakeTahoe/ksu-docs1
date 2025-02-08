@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Container, FloatingLabel } from 'react-bootstrap';
+import { Navigate } from 'react-router-dom';
 import Button from 'react-bootstrap/Button';
 import Col from 'react-bootstrap/Col';
 import Form from 'react-bootstrap/Form';
@@ -11,8 +12,18 @@ function LoginForm() {
     const [validated, setValidated] = useState(false);
     const [loginValue, setLoginValue] = useState('');
     const [passwordValue, setPasswordValue] = useState('');
+    const [haveNotAccount, setHaveNotAccount] = useState(false);
 
-    const signIn = async () => {
+    const goToRegister = () => {
+        setHaveNotAccount(true);
+    };
+
+    if (haveNotAccount) {
+        return <Navigate to="/register" />
+    }
+
+
+    const logIn = async () => {
         const response = await login(loginValue, passwordValue);
     }
 
@@ -24,7 +35,7 @@ function LoginForm() {
         }
         else {
             //Здесь код для работы, когда форма валидна
-            
+
         }
 
         setValidated(true);
@@ -32,8 +43,10 @@ function LoginForm() {
 
     return (
         <Container as={Col} md='6' className='login_form container-fluid mt-5'>
-            <div className='mt-3' style={{ textAlign: "center" }}>Форма авторизации</div>
-            <Form className='m-3' noValidate validated={validated} onSubmit={handleSubmit}>
+            <Form className='m-3 mt-0' noValidate validated={validated} onSubmit={handleSubmit}>
+                <Row className='p-3 '>
+                    <div style={{ textAlign: "center" }}>Форма авторизации</div>
+                </Row>
                 <Row className="mb-3">
                     <Form.Group as={Col} md="12" controlId="validationCustom01">
                         <FloatingLabel
@@ -70,12 +83,10 @@ function LoginForm() {
                         </FloatingLabel>
                     </Form.Group>
                 </Row>
-                <Form.Group className="mb-3">
-                    <Form.Check
-                        label="Запомнить меня"
-                    />
-                </Form.Group>
-                <Button type="submit">Войти</Button>
+                <Row style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around' }}>
+                    <Button as={Col} md='3' type="submit">Войти</Button>
+                    <Button as={Col} md='3' type="submit" onClick={goToRegister}>Нет аккаунта?</Button>
+                </Row>
             </Form>
         </Container>
     );

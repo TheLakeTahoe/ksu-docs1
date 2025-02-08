@@ -1,0 +1,14 @@
+-- Создание функции для обновления столбца updated при обновлении таблицы
+CREATE OR REPLACE FUNCTION update_updated()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated = NOW();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Создание триггера на обновление таблицы users
+CREATE TRIGGER update_users_updated
+BEFORE UPDATE ON users
+FOR EACH ROW
+EXECUTE FUNCTION update_updated();
