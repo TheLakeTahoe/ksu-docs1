@@ -1,0 +1,80 @@
+.main-data-form,
+.login-form-container,
+.personal-data-form {
+    background: #FFFFFF;
+    border-radius: 12px;
+    max-width: 450px;
+    margin: auto;
+}
+
+.login-btn {
+    width: 50%;
+    background-color: #1B9AE9;
+    border-color: #1B9AE9;
+    transition: 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #1578c2;
+    border-color: #1578c2;
+}
+
+.form-title,
+.login-title {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.form-row {
+    padding: 10px;
+}
+
+.form-button {
+    width: 50%;
+    background-color: #1B9AE9;
+    border: none;
+    padding: 10px 0;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background 0.3s ease;
+}
+
+.form-button:hover {
+    background-color: #0078D7;
+}
+
+.form-header {
+    padding: 10px 0;
+}
+
+.form-buttons {
+    margin-top: 20px;
+}
+
+.back-button,
+.submit-button {
+    width: 100%;
+    padding: 10px 0;
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+.back-button:hover {
+    background-color: #5a6268;
+}
+
+.submit-button {
+    background-color: #1B9AE9;
+    border: none;
+}
+
+.submit-button:hover {
+    background-color: #0078D7;
+}
+
+.docx {
+    min-height: 0px !important;
+    padding: 0px 40px 0px 75px !important;
+}

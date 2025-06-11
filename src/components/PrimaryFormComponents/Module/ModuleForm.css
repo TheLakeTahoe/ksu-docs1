@@ -1,0 +1,22 @@
+.module-card {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); /* Тень для карточки */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    opacity: 0; /* Начальная непрозрачность */
+    animation: fadeIn 0.5s forwards; /* Анимация появления */
+    background-color: #ffffff;
+    overflow: hidden;
+}
+
+.module-card:hover {
+    transform: scale(1.001); /* Легкое увеличение при наведении */
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12); /* Увеличенная тень */
+}
+
+.module-card-header {
+    background-color: #f5f5f5;  
+    margin: 0px -12px;
+    font-weight: bold;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}

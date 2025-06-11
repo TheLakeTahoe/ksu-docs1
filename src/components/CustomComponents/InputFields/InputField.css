@@ -1,0 +1,263 @@
+/* Общие стили для группы ввода */
+.input-group {
+  position: relative;
+  margin: 5px 0;
+}
+
+/* Лейбл (метка) для полей */
+.input-label {
+  position: absolute;
+  left: 12px;
+  top: 15px;
+  font-size: 1rem;
+  padding: 0 2px;
+  transition: 0.2s ease all;
+  pointer-events: none;
+  color: #6c757d;
+  background-color: #ffffff;
+  z-index: 10;
+}
+
+/* Лейбл при фокусе */
+.input-group:focus-within .input-label {
+  color: #007bff;
+}
+
+/* Общие стили для input и select */
+.input-field,
+.input-select,
+.input-textarea {
+  padding: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  border: 1px solid #ccc;
+  border-radius: 4px !important;
+}
+
+.input-field:disabled,
+.input-textarea:disabled,
+.input-textarea {
+  background-color: #ffffff !important;
+  opacity: 1;
+}
+
+/* Стили при фокусе */
+.input-field:focus,
+.input-select:focus,
+.input-textarea:focus {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+/* Активный лейбл (при вводе данных) */
+.active {
+  top: -5px;
+  left: 12px;
+  font-size: 0.75rem;
+  color: #6c757d;
+}
+
+/* Ошибочный ввод */
+.input-group.error .input-label.active,
+.input-textarea.error .input-label.active {
+  color: #dc3545;
+}
+
+.input-group.error .input-field,
+.input-group-phone.error .input-field,
+.input-group.error .input-select__control,
+.input-group.error .input-textarea {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 5px rgba(220, 53, 69, 0.5) !important;
+}
+
+/* === Стили для телефона === */
+.input-group-phone {
+  display: flex;
+  align-items: center;
+}
+
+#input-phone {
+  margin-left: -42px;
+  padding-left: 35px;
+}
+
+.input-group-text {
+  background-color: transparent;
+  border-color: transparent;
+  border-radius: 4px;
+  padding: 10px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  z-index: 8;
+}
+
+.input-group-phone .input-label,
+.input-group-phone .input-label.focused {
+  top: -5px;
+  left: 12px;
+  font-size: 0.75rem;
+  color: #007bff;
+}
+
+.input-group-phone:focus-within .input-field {
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.input-group-phone:focus-within .input-group-text {
+  background-color: transparent;
+}
+
+/* === Стили для кастомного Select === */
+.css-16xfy0z-control {
+  background-color: #FFF !important;
+}
+
+.css-t3ipsp-control,
+.css-13cymwt-control {
+  min-height: 46px !important;
+}
+
+.css-1dimb5e-singleValue,
+.input-select--is-disabled {
+  font-size: 16px;
+}
+
+.input-select__control {
+  border: 1px solid #ccc !important;
+  border-radius: 4px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease !important;
+}
+
+.input-select__control--is-focused {
+  border-color: #007bff !important;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5) !important;
+}
+
+.text-danger {
+  margin-top: -4px;
+  font-size: 10pt;
+}
+
+.input-select__input {
+  padding: 4px 0 !important;
+}
+
+/* === Иконка Danger === */
+.danger-icon {
+  width: 14px;
+  margin-top: -3px;
+  margin: 0 3px;
+}
+
+/* Стили для поля пароля */
+.input-group-password {
+  position: relative;
+}
+
+.input-textarea {
+  width: 100% !important;
+}
+
+/* Увеличим внутренний отступ справа для поля ввода, чтобы глаз не накладывался на текст */
+.input-field {
+  padding-right: 40px;
+  /* Чтобы глаз не перекрывал текст */
+}
+
+/* Кнопка глазика для скрытия/показа пароля */
+.eye-button {
+  cursor: pointer;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  position: absolute;
+  right: 10px;
+  top: 49%;
+  transform: translateY(-50%);
+  z-index: 10;
+  /* Чтобы глаз был поверх поля ввода */
+}
+
+/* Иконка глаза */
+.eye-icon {
+  transition: opacity 0.2s ease;
+}
+
+.eye-icon.blinking {
+  opacity: 0.5;
+}
+
+/* Стиль для иконки глаза */
+.eye-button svg {
+  color: #6c757d;
+}
+
+.eye-button:hover svg {
+  color: #007bff;
+}
+
+/* Стили для ошибок */
+.input-group.error .input-field {
+  border-color: #dc3545;
+}
+
+.input-group.error .eye-button svg {
+  color: #dc3545;
+}
+
+/* Стили для текста ошибки */
+.text-danger {
+  /* font-size: 12px; */
+  margin-top: -15px;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.text-danger.show {
+  margin-top: 5px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.danger-icon {
+  width: 16px;
+  margin-right: 5px;
+  pointer-events: none;
+}
+
+/* Анимация для кнопки видимости */
+.eye-icon {
+  transition: transform 0.15s ease-in-out, opacity 0.1s;
+}
+
+.eye-icon.blinking {
+  transform: scaleY(0.1);
+  opacity: 0.2;
+}
+
+/* Стили для select */
+.input-select {
+  width: 100%;
+  padding: 5px 0;
+  border: 0;
+}
+
+#input-undefined {
+  padding-right: 10px;
+}
+
+.comment-check {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-content: center;
+  padding-bottom: 10px;
+  flex-direction: column;
+  text-align: center;
+  
+  .input-group-text {
+    justify-content: center;
+  }
+}

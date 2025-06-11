@@ -1,0 +1,97 @@
+h6 {
+    margin-bottom: 5px !important;
+}
+
+.docx {
+    margin: 0 !important;
+    /* padding-left: 50px !important;
+    padding-right: 50px !important; */
+}
+
+.docx-wrapper {
+    overflow: hidden;
+    padding: 0 !important;
+}
+
+.nav-link.active {
+    font-size: var(--bs-nav-link-font-size);
+    ;
+}
+
+/* Для скрытия скроллбара, но чтобы прокрутка оставалась активной */
+.hide-scrollbar {
+    overflow: auto;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+    display: none;
+    /* Скрыть скроллбар для Webkit браузеров (Chrome, Safari, Edge) */
+}
+
+.hide-scrollbar {
+    -ms-overflow-style: none;
+    /* Для IE и Edge */
+    scrollbar-width: none;
+    /* Для Firefox */
+}
+/* Вкладка с ошибкой (не отправлено) */
+.nav-link.notSent {
+    background-color: rgb(255, 102, 102) !important; /* Мягкий красный */
+    color: white !important;
+    border-radius: 0 0 5px 5px !important;
+    font-weight: 500;
+    padding: 0;
+    height: 50px;
+}
+
+.nav-link.notSent.active {
+    background-color: rgb(230, 90, 90) !important; /* Чуть темнее */
+}
+
+/* Вкладка редактируется */
+.nav-link.editing {
+    background-color: rgb(255, 223, 102) !important; /* Приглушенный желтый */
+    color: black !important;
+    border-radius: 0 0 5px 5px !important;
+    font-weight: 500;
+    padding: 0;
+    height: 50px;
+}
+
+.nav-link.editing.active {
+    background-color: rgb(230, 200, 90) !important; /* Чуть темнее */
+}
+
+/* Вкладка успешно отправлена */
+.nav-link.sent {
+    background-color: rgb(102, 204, 153) !important; /* Мягкий зеленый */
+    color: white !important;
+    border-radius: 0 0 5px 5px !important;
+    font-weight: 500;
+    padding: 0;
+    height: 50px;
+}
+
+.nav-link.sent.active {
+    background-color: rgb(80, 180, 130) !important; /* Чуть темнее */
+}
+
+.modal-custom .modal-content {
+    border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.25);
+  }
+  
+  .modal-custom .modal-header {
+    background-color: #f4f4f4;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .modal-custom .modal-title {
+    color: #1b9ae9;
+    font-weight: bold;
+  }
+  
+  .modal-custom .modal-footer {
+    border-top: 1px solid #ddd;
+  }
+  

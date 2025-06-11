@@ -1,0 +1,64 @@
+.teacher-form-card {
+    width: 100%;
+    min-height: 350px;
+    position: relative;
+    border-radius: 12px;  
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);  
+    background-color: #ffffff;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    animation: fadeIn 0.25s forwards;  /* Анимация появления */
+}
+
+/* Определение анимации для плавного появления */
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+        transform: translateY(15px);  /* Эффект движения вверх */
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);  /* Конечное положение */
+    }
+}
+
+@keyframes Decompression {
+    0% {
+        opacity: 0;
+        height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+    100% {
+        opacity: 1;
+        height: 0;
+        padding-top: 13px;
+        padding-bottom: 31px;
+    }
+}
+
+.teacher-form-card:hover {
+    transform: scale(1.001); 
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);  
+}
+
+.teacher-form-header {
+    background-color: #f5f5f5;  
+    padding: 10px;
+    font-weight: bold;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.remove-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1;
+    border: none;
+    color: white;
+    padding: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
