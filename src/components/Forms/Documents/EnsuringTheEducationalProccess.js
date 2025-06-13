@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import InputField from '../../CustomComponents/InputFields/InputField' // путь к компоненту
 import { Button, Card, Col, Container, Modal, Row, Spinner } from 'react-bootstrap'
 import { renderAsync } from 'docx-preview'
-import { exportEnsuringTheEducationalProccess, sendEnsuringTheEducationalProccess } from '../../../http/documentAPI'
+import { exportEnsuringTheEducationalProccess, sendDocument } from '../../../http/documentAPI'
 import ReviwerTools from '../../CustomComponents/Other/ReviewerTools'
 
 const roomOptions = [
@@ -11,10 +11,11 @@ const roomOptions = [
   { label: 'Корпус Б, Б-201', value: '3', address: 'ул. Новая, дом Тот же' }
 ]
 
-const EnsuringTheEducationalProccessForm = ({ userData, requestID, onChange, commonData, setDocumentsData, isEditable, isChecking, onSave }) => {
+const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData, setDocumentsData, isEditable, isChecking, onSave }) => {
   const [moduleList, setModuleList] = useState([])
   const [showModal, setShowModal] = useState(false);
   const [moduleErrors, setModuleErrors] = useState({});
+  const commonData = documentsData.commonData
   const containerRef = useRef(null);
 
   useEffect(() => {
@@ -97,10 +98,16 @@ const EnsuringTheEducationalProccessForm = ({ userData, requestID, onChange, com
     return Object.keys(errors).length === 0;
   };
 
-  const sendDocument = () => {
+  const sendThisDocument = () => {
     if (!validateModules())
       return
-    sendEnsuringTheEducationalProccess(commonData, requestID, userData?.id)
+    const dataToSend = {
+      ...documentsData,
+      EEP: true
+    }
+    setDocumentsData(dataToSend)
+    
+    sendDocument(dataToSend, requestID)
     onSave()
   }
 
@@ -111,7 +118,7 @@ const EnsuringTheEducationalProccessForm = ({ userData, requestID, onChange, com
       )}
       <Col style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {isEditable && (
-          <Button className='mb-3' style={{ backgroundColor: 'rgb(27, 154, 233)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={sendDocument}>Сохранить</Button>
+          <Button className='mb-3' style={{ backgroundColor: 'rgb(27, 154, 233)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={sendThisDocument}>Сохранить</Button>
         )}
         <Button className='mb-3 ms-2' style={{ backgroundColor: 'rgb(80, 180, 130)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={handleViewDoc} >Предпросмотр документа</Button>
       </Col>

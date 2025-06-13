@@ -106,7 +106,7 @@ class RequestController {
                 const userInfo = await db.query(
                     `Select full_name, phone, email From accounts Where id = $1`,
                     {
-                        bind: [account_id[0][0].id],
+                        bind: [account_id],
                         type: QueryTypes.SELECT
                     }
                 );
@@ -153,7 +153,7 @@ class RequestController {
                 {
                     replacements: [
                         ksuDepartment, typeGradDoc, programCoordinator,
-                        programType, lessonSheduleId, account_id[0][0].id,
+                        programType, lessonSheduleId, account_id,
                         study_period, program_name, program_description_short,
                         program_description, target_audience, program_hours,
                         education_cost

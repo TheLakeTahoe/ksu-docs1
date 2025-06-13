@@ -27,42 +27,6 @@ export const DocumentsProvider = ({ children }) => {
             },
         },
 
-        // ИНФОРМАЦИЯ О КАДРОВОМ ОБЕСПЕЧЕНИИ
-        informationAboutStaffing: {
-            // Данные о преподавателе
-            teachers: {
-                // Имя и должность в образовательной программе
-                teacher: {
-                    name: '',
-                    position: '',
-                },
-
-                // Данные об обучении
-                education: {
-                    institute: '',
-                    specialty: '',
-                },
-
-                // Ученая степень, квалификационая категория
-                category: '',
-
-                // Опыт работы
-                experience: {
-                    overall: '',
-                    in_discipline: '',
-                },
-
-                // Место работы и должность
-                workplace: {
-                    name: '',
-                    position: '',
-                },
-
-                // Условия привлечения к педагогической деятельности
-                conditions: '',
-            }
-        },
-
         //* НЕ Уникальные данные *//
         commonData: {
             // Общие данные о программе
@@ -130,18 +94,13 @@ export const DocumentsProvider = ({ children }) => {
 
             },
         },
-
-        // Формы только с общими данными
-        educationalPlan: {
-
-        },
-        educationalAndThematicPlan: {
-
-        },
-
-        ensuringTheEducationalProccess: {
-
-        },
+    
+        // Статусы отправки
+        ANN: false, // Аннотация ДОП
+        EDP: false, // Учебный план
+        ETP: false, // Учебно-тематический план
+        EEP: false, // Обеспечение образовательного процесса
+        IAS: false  // Сведения о кадровом обеспечении 
     })
 
     const commonDataFieldsName = {

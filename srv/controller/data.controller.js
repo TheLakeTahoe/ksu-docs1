@@ -92,7 +92,7 @@ class DataController {
     async getFormModules(req, res) {
         try {
             const { primary_form_id } = req.body
-            const modules = await db.query(`Select modules.name, modules.h_overall, modules.h_lk, modules.h_lb, modules.h_pr, modules.h_sr, modules.control_form, modules.parent From primary_forms
+            const modules = await db.query(`Select modules.name, modules.h_overall, modules.h_lk, modules.h_lb, modules.h_pr, modules.h_sr, modules.control_form From primary_forms
                                             Inner Join form_program_modules  On primary_form_id=primary_forms.id
                                             Inner Join program_modules As modules On program_module_id=modules.id
                                             Where primary_forms.id=$1::Integer`, {

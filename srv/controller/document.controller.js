@@ -8,17 +8,9 @@ class DocumentController {
     async getDocumentsData(req, res) {
         try {
             const { requestID } = req.body
-            const doc_data = await db.query(`Select doc1.document_data as doc1_data, doc1.updated as doc1_updated,
-                                              doc2.document_data as doc2_data, doc2.updated as doc2_updated,
-                                              doc3.document_data as doc3_data, doc3.updated as doc3_updated,
-                                              doc4.document_data as doc4_data, doc4.updated as doc4_updated,
-                                              doc5.document_data as doc5_data, doc5.updated as doc5_updated
+            const doc_data = await db.query(`Select doc.data as data, doc.updated as updated
                                               From document_groups
-                                              Left Join documents as doc1 On doc1.id = document_id_1
-                                              Left Join documents as doc2 On doc2.id = document_id_2
-                                              Left Join documents as doc3 On doc3.id = document_id_3
-                                              Left Join documents as doc4 On doc4.id = document_id_4
-                                              Left Join documents as doc5 On doc5.id = document_id_5
+                                              Left Join documents as doc On doc.id = documents_id
                                               Where primary_form_id=$1`, {
                 bind: [requestID],
                 type: QueryTypes.SELECT
@@ -322,30 +314,30 @@ class DocumentController {
 
 
     // SEND BLOCK
-    async sendAnnotation(req, res) {
+    async sendDocument(req, res) {
         try {
             const { dataToSend, requestID } = req.body
             if (!dataToSend?.controlForm) dataToSend.controlForm = 'Отсутствует'
             let documentID
-            const checkDocument = await db.query(`Select primary_form_id, document_id_1 From document_groups
+            const checkDocument = await db.query(`Select primary_form_id, documents_id From document_groups
                                                   Where primary_form_id=$1
-                                                  Group by primary_form_id, document_id_1`, {
+                                                  Group by primary_form_id, documents_id`, {
                 bind: [requestID],
                 type: QueryTypes.SELECT
             })
             console.log(checkDocument)
-            if (checkDocument.length === 1 && checkDocument[0].document_id_1 === null) {
-                const newDocument = await db.query(`Insert Into documents(document_type_id, document_data, created, updated)
-                                                    Values($1, $2, Now(), Now())
+            if (checkDocument.length === 1) {
+                const newDocument = await db.query(`Insert Into documents(data, created, updated)
+                                                    Values($1, Now(), Now())
                                                     Returning id`, {
-                    bind: [1, dataToSend],
+                    bind: [dataToSend],
                     type: QueryTypes.INSERT
                 })
 
                 documentID = newDocument[0][0].id;
 
                 const response = await db.query(`Update document_groups
-                                                 Set document_id_1=$1
+                                                 Set documents_id=$1
                                                  Where primary_form_id=$2`, {
                     bind: [documentID, requestID],
                     type: QueryTypes.UPDATE
@@ -354,202 +346,9 @@ class DocumentController {
                 return res.json({ response })
             }
             else {
-                documentID = checkDocument[0].document_id_1
+                documentID = checkDocument[0].documents_id
                 const response = await db.query(`Update documents
-                                                 Set document_data=$1, updated=Now()
-                                                 Where id=$2`, {
-                    bind: [dataToSend, documentID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-
-
-        } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
-        }
-    }
-
-    async sendEducationalPlan(req, res) {
-        try {
-            const { dataToSend, requestID } = req.body
-            let documentID
-            const checkDocument = await db.query(`Select primary_form_id, document_id_2 From document_groups
-                                                  Where primary_form_id=$1
-                                                  Group by primary_form_id, document_id_2`, {
-                bind: [requestID],
-                type: QueryTypes.SELECT
-            })
-            if (checkDocument.length === 1 && checkDocument[0].document_id_2 === null) {
-                const newDocument = await db.query(`Insert Into documents(document_type_id, document_data, created, updated)
-                                                    Values($1, $2, Now(), Now())
-                                                    Returning id`, {
-                    bind: [2, dataToSend],
-                    type: QueryTypes.INSERT
-                })
-
-                documentID = newDocument[0][0].id;
-
-                const response = await db.query(`Update document_groups
-                                                 Set document_id_2=$1
-                                                 Where primary_form_id=$2`, {
-                    bind: [documentID, requestID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-            else {
-                documentID = checkDocument[0].document_id_2
-                const response = await db.query(`Update documents
-                                                 Set document_data=$1, updated=Now()
-                                                 Where id=$2`, {
-                    bind: [dataToSend, documentID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-
-
-        } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
-        }
-    }
-
-    async sendEducationalAndThematicPlan(req, res) {
-        try {
-            const { dataToSend, requestID } = req.body
-            let documentID
-            const checkDocument = await db.query(`Select primary_form_id, document_id_3 From document_groups
-                                                  Where primary_form_id=$1
-                                                  Group by primary_form_id, document_id_3`, {
-                bind: [requestID],
-                type: QueryTypes.SELECT
-            })
-            if (checkDocument.length === 1 && checkDocument[0].document_id_3 === null) {
-                const newDocument = await db.query(`Insert Into documents(document_type_id, document_data, created, updated)
-                                                    Values($1, $2, Now(), Now())
-                                                    Returning id`, {
-                    bind: [3, dataToSend],
-                    type: QueryTypes.INSERT
-                })
-
-                documentID = newDocument[0][0].id;
-
-                const response = await db.query(`Update document_groups
-                                                 Set document_id_3=$1
-                                                 Where primary_form_id=$2`, {
-                    bind: [documentID, requestID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-            else {
-                documentID = checkDocument[0].document_id_3
-                const response = await db.query(`Update documents
-                                                 Set document_data=$1, updated=Now()
-                                                 Where id=$2`, {
-                    bind: [dataToSend, documentID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-
-
-        } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
-        }
-    }
-
-    async sendEnsuringTheEducationalProccess(req, res) {
-        try {
-            const { dataToSend, requestID } = req.body
-            if (!dataToSend?.controlForm) dataToSend.controlForm = 'Отсутствует'
-            let documentID
-            const checkDocument = await db.query(`Select primary_form_id, document_id_4 From document_groups
-                                                  Where primary_form_id=$1
-                                                  Group by primary_form_id, document_id_4`, {
-                bind: [requestID],
-                type: QueryTypes.SELECT
-            })
-            if (checkDocument.length === 1 && checkDocument[0].document_id_4 === null) {
-                const newDocument = await db.query(`Insert Into documents(document_type_id, document_data, created, updated)
-                                                    Values($1, $2, Now(), Now())
-                                                    Returning id`, {
-                    bind: [4, dataToSend],
-                    type: QueryTypes.INSERT
-                })
-
-                documentID = newDocument[0][0].id;
-
-                const response = await db.query(`Update document_groups
-                                                 Set document_id_4=$1
-                                                 Where primary_form_id=$2`, {
-                    bind: [documentID, requestID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-            else {
-                documentID = checkDocument[0].document_id_4
-                const response = await db.query(`Update documents
-                                                 Set document_data=$1, updated=Now()
-                                                 Where id=$2`, {
-                    bind: [dataToSend, documentID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-
-
-        } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
-        }
-    }
-
-    async sendInformationAboutStaffing(req, res) {
-        try {
-            const { dataToSend, requestID } = req.body
-            let documentID
-            const checkDocument = await db.query(`Select primary_form_id, document_id_5 From document_groups
-                                                  Where primary_form_id=$1
-                                                  Group by primary_form_id, document_id_5`, {
-                bind: [requestID],
-                type: QueryTypes.SELECT
-            })
-            if (checkDocument.length === 1 && checkDocument[0].document_id_5 === null) {
-                const newDocument = await db.query(`Insert Into documents(document_type_id, document_data, created, updated)
-                                                    Values($1, $2, Now(), Now())
-                                                    Returning id`, {
-                    bind: [5, dataToSend],
-                    type: QueryTypes.INSERT
-                })
-
-                documentID = newDocument[0][0].id;
-
-                const response = await db.query(`Update document_groups
-                                                 Set document_id_5=$1
-                                                 Where primary_form_id=$2`, {
-                    bind: [documentID, requestID],
-                    type: QueryTypes.UPDATE
-                })
-
-                return res.json({ response })
-            }
-            else {
-                documentID = checkDocument[0].document_id_5
-                const response = await db.query(`Update documents
-                                                 Set document_data=$1, updated=Now()
+                                                 Set data=$1, updated=Now()
                                                  Where id=$2`, {
                     bind: [dataToSend, documentID],
                     type: QueryTypes.UPDATE

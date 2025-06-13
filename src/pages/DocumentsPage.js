@@ -11,7 +11,7 @@ import InformationAboutStaffingForm from '../components/Forms/Documents/Informat
 import EnsuringTheEducationalProccessForm from '../components/Forms/Documents/EnsuringTheEducationalProccess';
 import { getRequestDocuments } from '../http/requestAPI';
 import { useAuth } from '../context/AuthContext';
-import { sendDocumentGroup } from '../http/documentAPI';
+import { getDocumentsData, sendDocumentGroup } from '../http/documentAPI';
 
 function DocumentsPage() {
   const [key, setKey] = useState('1');
@@ -37,8 +37,8 @@ function DocumentsPage() {
   useEffect(() => {
     fillDocuments(requestID, setDocumentsData)
     const checkDocumentStatuses = async () => {
-      const response = await getRequestDocuments(requestID)
-      setRequestDocuments(response.data.requestdocuments[0])
+      const response = await getDocumentsData(requestID)
+      setRequestDocuments(response?.data[0].data)
     }
     checkDocumentStatuses()
 
@@ -57,6 +57,8 @@ function DocumentsPage() {
 
   };
 
+  console.log(requestDocuments)
+
   if (!requestID) navigate('/main')
 
   const [tabStates, setTabStates] = useState({
@@ -69,11 +71,11 @@ function DocumentsPage() {
 
   useEffect(() => {
     const updatedTabStates = {
-      1: requestDocuments?.document_id_1 ? 'sent' : 'notSent',
-      2: requestDocuments?.document_id_2 ? 'sent' : 'notSent',
-      3: requestDocuments?.document_id_3 ? 'sent' : 'notSent',
-      4: requestDocuments?.document_id_4 ? 'sent' : 'notSent',
-      5: requestDocuments?.document_id_5 ? 'sent' : 'notSent'
+      1: requestDocuments?.ANN ? 'sent' : 'notSent',
+      2: requestDocuments?.EDP ? 'sent' : 'notSent',
+      3: requestDocuments?.ETP ? 'sent' : 'notSent',
+      4: requestDocuments?.EEP ? 'sent' : 'notSent',
+      5: requestDocuments?.IAS ? 'sent' : 'notSent'
     }
     setTabStates(updatedTabStates)
 
@@ -103,6 +105,7 @@ function DocumentsPage() {
 
   const sendDocuments = async () => {
     const response = await sendDocumentGroup(requestID)
+    console.log(response)
     return response.data.success
   }
 
@@ -126,8 +129,7 @@ function DocumentsPage() {
               requestID={requestID}
               isEditable={isEditable}
               isChecking={isChecking}
-              annotationData={documentsData.annotation}
-              commonData={documentsData.commonData}
+              documentsData={documentsData}
               setDocumentsData={setDocumentsData}
               onChange={(field_name) => {
                 updateTabState(1, 'editing')
@@ -141,7 +143,7 @@ function DocumentsPage() {
               requestID={requestID}
               isEditable={isEditable}
               isChecking={isChecking}
-              commonData={documentsData.commonData}
+              documentsData={documentsData}
               setDocumentsData={setDocumentsData}
               onChange={(field_name) => {
                 updateTabState(2, 'editing')
@@ -155,7 +157,7 @@ function DocumentsPage() {
               requestID={requestID}
               isEditable={isEditable}
               isChecking={isChecking}
-              commonData={documentsData.commonData}
+              documentsData={documentsData}
               setDocumentsData={setDocumentsData}
               onChange={(field_name) => {
                 updateTabState(3, 'editing')
@@ -170,7 +172,7 @@ function DocumentsPage() {
               requestID={requestID}
               isEditable={isEditable}
               isChecking={isChecking}
-              commonData={documentsData.commonData}
+              documentsData={documentsData}
               setDocumentsData={setDocumentsData}
               onChange={(field_name) => {
                 updateTabState(4, 'editing')
@@ -185,7 +187,7 @@ function DocumentsPage() {
               requestID={requestID}
               isEditable={isEditable}
               isChecking={isChecking}
-              commonData={documentsData.commonData}
+              documentsData={documentsData}
               setDocumentsData={setDocumentsData}
               onChange={(field_name) => {
                 updateTabState(5, 'editing')

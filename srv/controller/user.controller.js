@@ -39,6 +39,32 @@ class UserController {
         }
     }
 
+    async getUserData(req, res) {
+        try {
+            console.log(req.body)
+            const { id, phone, email, full_name } = req.body
+
+            console.log(phone)
+
+            const user = await db.query(
+                `Select login, email, phone, full_name, work_experience, created, positions.name As position, education.name As education, workplaces.name as workplace From accounts
+                Inner Join positions On positions.id = position_id
+                Inner Join education On education.id = education_id
+                Inner Join workplaces On workplaces.id = workplace_id
+                Where accounts.id=$1::Integer And trim(phone)=$2 And trim(email)=$3 And trim(full_name)=$4`,
+                {
+                    bind: [id, phone, email, full_name],
+                    type: QueryTypes.SELECT
+                })
+
+                console.log(user)
+
+            return res.status(200).json({ data: user[0] })
+
+        } catch (error) {
+            return res.status(500).json({ message: 'Ошибка сервера!' })
+        }
+    }
 
     // Авторизация
     async userAuth(req, res) {
@@ -133,13 +159,13 @@ class UserController {
 
             const userID = await db.query(
                 `Insert Into accounts (role_id, education_id, login, email, password, phone, position_id, full_name, work_experience, workplace_id, created)
-                 Values (1, $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) Returning id`, {
-                bind: [roleID, login, email, password_hash, phone, positionID, fullName, workExperience, workplaceID],
+                 Values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) Returning id`, {
+                bind: [roleID, education_id, login, email, password_hash, phone, positionID, fullName, workExperience, workplaceID],
                 type: QueryTypes.INSERT
             })
 
             const token = jwt.sign(
-                { id: userID, phone: phone, email: email, full_name: fullName, role_id: roleID },
+                { id: userID[0][0].id, phone: phone, email: email, full_name: fullName, role_id: roleID },
                 SECRET_KEY,
                 { expiresIn: '24h' }
             )

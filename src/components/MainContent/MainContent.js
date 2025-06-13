@@ -4,6 +4,7 @@ import { FiPlus, FiEye, FiEdit, FiCheck, FiX, FiFileText } from 'react-icons/fi'
 import { useNavigate } from 'react-router-dom';
 import { getRequestDocuments, getUserRequests } from '../../http/requestAPI';
 import { useAuth } from '../../context/AuthContext';
+import { getDocumentsData } from '../../http/documentAPI';
 
 const MainContent = () => {
     const [requests, setRequests] = useState([]);
@@ -55,8 +56,8 @@ const MainContent = () => {
 
     const openRequest = async (request) => {
         setSelectedRequest(request);
-        const response = await getRequestDocuments(request.id)
-        setRequestDocuments(response.data.requestdocuments[0])
+        const response = await getDocumentsData(request.id)
+        setRequestDocuments(response.data[0].data)
         setModalOpen(true);
     };
 
@@ -162,11 +163,11 @@ const MainContent = () => {
                     <hr />
                     <ListGroup className="mb-3">
                         {[
-                            { name: "Аннотация ДОП", saved: requestDocuments?.document_id_1 },
-                            { name: "Учебный план", saved: requestDocuments?.document_id_2 },
-                            { name: "Учебно-тематический план", saved: requestDocuments?.document_id_3 },
-                            { name: "Обеспечение образовательного процесса", saved: requestDocuments?.document_id_4 },
-                            { name: "Сведения о кадровом обеспечении", saved: requestDocuments?.document_id_5 }
+                            { name: "Аннотация ДОП", saved: requestDocuments?.ANN },
+                            { name: "Учебный план", saved: requestDocuments?.EDP },
+                            { name: "Учебно-тематический план", saved: requestDocuments?.ETP },
+                            { name: "Обеспечение образовательного процесса", saved: requestDocuments?.EEP },
+                            { name: "Сведения о кадровом обеспечении", saved: requestDocuments?.IAS }
                         ].map((doc, index) => (
                             <ListGroup.Item
                                 key={index}

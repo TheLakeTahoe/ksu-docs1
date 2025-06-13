@@ -26,154 +26,114 @@ const setByPath = (obj, path, value) => {
 export const fillDocuments = async (requestID, setDocumentsData) => {
     if (!requestID) return;
 
-    const documentsCommonData = [];
+    try {
+        // Получаем все необходимые данные
+        const [
+            primaryFormData,
+            documentsResponse,
+            formAspectsData,
+            formModulesData
+        ] = await Promise.all([
+            getPrimaryFormData(requestID),
+            getDocumentsData(requestID),
+            getFormAspects(requestID),
+            getFormModules(requestID)
+        ]);
 
-    // Ждём все данные
-    const [
-        primaryFormData,
-        documents,
-        formAspectsData,
-        formModulesData
-    ] = await Promise.all([
-        getPrimaryFormData(requestID),
-        getDocumentsData(requestID),
-        getFormAspects(requestID),
-        getFormModules(requestID)
-    ]);
+        // Получаем данные документов из ответа сервера
+        const serverDocumentsData = documentsResponse?.data[0]?.data;
+        console.log('Данные с сервера:', serverDocumentsData);
 
-    if (primaryFormData.data.data[0]) {
-        documentsCommonData.push(primaryFormData.data.data[0])
-    }
-
-    // Собираем общие данные
-    if (documents.data.length > 0) {
-        const docData = documents.data[0];
-        documentsCommonData.push(
-            docData?.doc1_data,
-            docData?.doc2_data,
-            docData?.doc3_data,
-            docData?.doc4_data,
-            docData?.doc5_data
-        );
-    }
-
-    if (formAspectsData.data?.aspects)
-        documentsCommonData.push(formAspectsData.data);
-
-    if (formModulesData.data?.modules) {
-        documentsCommonData.push(formModulesData.data);
-    }
-
-    if (Object.values(documents.data[0]).every(s => s === null)) {
-        // Заполняем documentsData
-        setDocumentsData(prev => {
-            const updated = structuredClone(prev);
-
-            documentsCommonData.forEach(dataObject => {
-                if (!dataObject) return;
-
-                Object.entries(dataObject).forEach(([key, value]) => {
-                    const paths = serverToDocumentMap[key];
-                    if (paths) {
-                        paths.forEach(path => {
-                            setByPath(updated, path, value || '');
-                        });
-                    }
-                });
-            });
-
-            return updated;
-        });
-    }
-    else {
-        const latestDocKey = Object.entries(documents.data[0])
-            .filter(([key]) => key.includes('updated'))
-            .sort((a, b) => new Date(b[1]) - new Date(a[1]))[0][0].replace('_updated', '_data');
-
-        const latestData = documents.data[0][latestDocKey];
-
-        let normalizedData;
-
-        // Шаблоны по умолчанию
-        const defaultStructure = {
+        // Создаем базовую структуру с дефолтными значениями
+        const defaultData = {
             annotation: {
-                program: {
-                    control_form: '',
-                    direction: '',
-                    benefits: '',
-                    graduation_doc: primaryFormData.data.data[0]?.grad_doc_name || '',
-                },
                 ksu: {
-                    department: '',
                     auditory: '',
                     equipment: '',
+                    department: ''
                 },
-                technologies: {},
+                program: {
+                    benefits: '',
+                    direction: '',
+                    control_form: '',
+                    graduation_doc: primaryFormData.data.data[0]?.grad_doc_name || ''
+                },
+                technologies: {}
             },
             commonData: {
-                program: {
-                    program_type: primaryFormData.data.data[0]?.program_type || '',
-                    program_goal: '',
-                    program_name: primaryFormData.data.data[0]?.program_name || '',
-                    education_form: primaryFormData.data.data[0]?.shedule_name || '',
-                    listeners_category: primaryFormData.data.data[0]?.target_audience || '',
-                    standart_compliance: '',
-                },
                 hours: {
                     overall: '',
-                    academic: primaryFormData.data.data[0]?.program_hours || '',
+                    academic: primaryFormData.data.data[0]?.program_hours || ''
                 },
                 lesson: {
                     count: '',
-                    duration: '',
+                    duration: ''
                 },
-                modules: formModulesData.data?.modules || {},
-                aspects: formAspectsData.data?.aspects || {},
+                aspects: formAspectsData.data?.aspects || [],
+                modules: formModulesData.data?.modules || [],
+                program: {
+                    program_goal: '',
+                    program_name: primaryFormData.data.data[0]?.program_name || '',
+                    program_type: primaryFormData.data.data[0]?.p_type_name || '',
+                    education_form: primaryFormData.data.data[0]?.shedule_name || '',
+                    listeners_category: primaryFormData.data.data[0]?.target_audience || '',
+                    standart_compliance: ''
+                }
             },
+            ANN: false,
+            EDP: false,
+            ETP: false,
+            EEP: false,
+            IAS: false
         };
 
-        // Если уже в нужной структуре
-        if ('commonData' in latestData && 'annotationData' in latestData) {
-            normalizedData = {
-                annotation: {
-                    ...defaultStructure.annotation,
-                    ...documents.data[0].doc1_data.annotationData,        // берем из исходных всегда
-                    ...latestData.annotationData,   // перезаписываем если есть новые
+        // Объединяем данные с сервера с дефолтной структурой
+        const mergedData = {
+            annotation: {
+                ...defaultData.annotation,
+                ...serverDocumentsData?.annotation,
+                program: {
+                    ...defaultData.annotation.program,
+                    ...serverDocumentsData?.annotation?.program
                 },
-                commonData: {
-                    ...defaultStructure.commonData,
-                    ...latestData.commonData,
+                ksu: {
+                    ...defaultData.annotation.ksu,
+                    ...serverDocumentsData?.annotation?.ksu
+                }
+            },
+            commonData: {
+                ...defaultData.commonData,
+                ...serverDocumentsData?.commonData,
+                hours: {
+                    ...defaultData.commonData.hours,
+                    ...serverDocumentsData?.commonData?.hours
                 },
-            };
-        } else {
-            if (documents.data[0].doc1_data !== null)
-                // Если нет annotationData, то не трогаем аннотацию из doc1_data, просто кладём ее как есть
-                normalizedData = {
-                    annotation: {
-                        ...defaultStructure.annotation,
-                        ...documents.data[0].doc1_data.annotationData,  // всегда берем существующую аннотацию
-                    },
-                    commonData: {
-                        ...defaultStructure.commonData,
-                        ...latestData,
-                    },
-                };
-            else
-                normalizedData = {
-                    annotation: {
-                        ...defaultStructure.annotation,
-                    },
-                    commonData: {
-                        ...defaultStructure.commonData,
-                        ...latestData,
-                    },
-                };
-        }
+                lesson: {
+                    ...defaultData.commonData.lesson,
+                    ...serverDocumentsData?.commonData?.lesson
+                },
+                program: {
+                    ...defaultData.commonData.program,
+                    ...serverDocumentsData?.commonData?.program
+                },
+                // Сохраняем аспекты и модули из отдельных запросов, если они есть
+                aspects: serverDocumentsData?.commonData?.aspects || formAspectsData.data?.aspects || [],
+                modules: serverDocumentsData?.commonData?.modules || formModulesData.data?.modules || []
+            },
+            ANN: serverDocumentsData?.ANN || false,
+            EDP: serverDocumentsData?.EDP || false,
+            ETP: serverDocumentsData?.ETP || false,
+            EEP: serverDocumentsData?.EEP || false,
+            IAS: serverDocumentsData?.IAS || false
+        };
 
-        setDocumentsData(normalizedData);
-        console.log(normalizedData);
+        // Обновляем состояние
+        setDocumentsData(mergedData);
+        console.log('Объединенные данные:', mergedData);
+
+    } catch (error) {
+        console.error('Ошибка при заполнении документов:', error);
+        // Можно добавить обработку ошибок, например:
+        // setErrorState('Не удалось загрузить данные документов');
     }
-
-
-
 };

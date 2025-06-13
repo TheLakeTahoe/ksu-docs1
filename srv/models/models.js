@@ -203,22 +203,6 @@ const groupStatus = sequelize.define('group_status', {
     timestamps: false
 })
 
-// Таблица document_type (Тип документа)
-const documentType = sequelize.define('document_type', {
-    id: {                           // ID типа документа
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
-    name: {                         // Название типа документа
-        type: DataTypes.STRING,
-        allowNull: false,
-        unique: true
-    },
-}, {
-    timestamps: false
-})
-
 // Таблица lesson_shedule (Режим занятий)
 const lessonShedule = sequelize.define('lesson_shedule', {
     id: {                           // ID режима занятий
@@ -465,11 +449,7 @@ const document = sequelize.define('document', {
         primaryKey: true,
         autoIncrement: true
     },
-    document_type_id: {                           // Ссылка на document_type
-        type: DataTypes.INTEGER,
-        allowNull: false
-    },
-    document_data: {                             // Данные документа
+    data: {                             // Данные документа
         type: DataTypes.JSONB,
         allowNull: false
     },
@@ -494,27 +474,7 @@ const documentGroup = sequelize.define('document_group', {
         primaryKey: true,
         autoIncrement: true
     },
-    document_id_1: {                             // Ссылка на document
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true
-    },
-    document_id_2: {                             // Ссылка на document
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true
-    },
-    document_id_3: {                             // Ссылка на document
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true
-    },
-    document_id_4: {                             // Ссылка на document
-        type: DataTypes.INTEGER,
-        allowNull: true,
-        unique: true
-    },
-    document_id_5: {                             // Ссылка на document
+    documents_id: {                             // Ссылка на document
         type: DataTypes.INTEGER,
         allowNull: true,
         unique: true
@@ -581,23 +541,13 @@ primaryForm.belongsTo(programCoordinator, { foreignKey: 'program_coordinator_id'
 programCoordinator.hasMany(primaryForm, { foreignKey: 'program_coordinator_id' })
 
 // Связи document_group
-documentGroup.belongsTo(document, { foreignKey: 'document_id_1' })
-documentGroup.belongsTo(document, { foreignKey: 'document_id_2' })
-documentGroup.belongsTo(document, { foreignKey: 'document_id_3' })
-documentGroup.belongsTo(document, { foreignKey: 'document_id_4' })
-documentGroup.belongsTo(document, { foreignKey: 'document_id_5' })
+documentGroup.belongsTo(document, { foreignKey: 'documents_id' })
 documentGroup.belongsTo(primaryForm, { foreignKey: 'primary_form_id' })
 documentGroup.belongsTo(groupStatus, { foreignKey: 'group_status_id' })
 documentGroup.belongsTo(requestStep, { foreignKey: 'step_id' })
 
 // Связи request_step
 requestStep.hasMany(documentGroup, {foreignKey: 'step_id'})
-
-// Связи documents
-document.belongsTo(documentType, { foreignKey: 'document_type_id' })
-
-// Связи document_types
-documentType.hasMany(document, { foreignKey: 'document_type_id' })
 
 // Связи account
 account.belongsTo(userRole, { foreignKey: 'user_role_id' })
@@ -656,7 +606,6 @@ module.exports = {
     programSubModule,
     education,
     groupStatus,
-    documentType,
     primaryForm,
     programCoordinator,
     teacher,

@@ -1,4 +1,3 @@
-import { useAuth } from '../context/AuthContext'
 import { $host } from './index'
 
 export const authorize = async (formValues) => {
@@ -25,8 +24,6 @@ export const checkLogin = (login) => checkField('login', login)
 export const checkPhone = (phone) => checkField('phone', phone)
 export const checkEmail = (email) => checkField('email', email)
 
-
-
 export const register = async (formValues) => {
     try {
         const response = await $host.post(`api/user/register`, formValues)
@@ -34,5 +31,15 @@ export const register = async (formValues) => {
 
     } catch (error) {
         console.log('Ошибка при регистрации: ', error)
+    }
+}
+
+export const getUserData = async (userData) => {
+    try {
+        const response = await $host.post(`api/user/get_user_data`, userData)
+        return response.data
+
+    } catch (error) {
+        console.log('Ошибка при получении данных пользователя: ', error)
     }
 }

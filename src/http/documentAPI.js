@@ -71,45 +71,9 @@ export const exportInformationAboutStaffing = async (formValues) => {
 };
 
 // SEND BLOCK
-export const sendAnnotation = async (dataToSend, requestID, account_id) => {
+export const sendDocument = async (dataToSend, requestID) => {
     try {
-        const response = await $host.post(`api/document/send_annotation`, { dataToSend, requestID, account_id })
-        return response
-    } catch (error) {
-        console.log('Ошибка при отправке документа: ', error)
-    }
-}
-
-export const sendEducationalPlan = async (dataToSend, requestID, account_id) => {
-    try {
-        const response = await $host.post(`api/document/send_educational_plan`, { dataToSend, requestID, account_id })
-        return response
-    } catch (error) {
-        console.log('Ошибка при отправке документа: ', error)
-    }
-}
-
-export const sendEducationAndThematicPlan = async (dataToSend, requestID, account_id) => {
-    try {
-        const response = await $host.post(`api/document/send_educational_and_thematic_plan`, { dataToSend, requestID, account_id })
-        return response
-    } catch (error) {
-        console.log('Ошибка при отправке документа: ', error)
-    }
-}
-
-export const sendEnsuringTheEducationalProccess = async (dataToSend, requestID, account_id) => {
-    try {
-        const response = await $host.post(`api/document/send_ensuring_the_educational_proccess`, { dataToSend, requestID, account_id })
-        return response
-    } catch (error) {
-        console.log('Ошибка при отправке документа: ', error)
-    }
-}
-
-export const sendInformationAboutStaffing = async (dataToSend, requestID, account_id) => {
-    try {
-        const response = await $host.post(`api/document/send_information_about_staffing`, { dataToSend, requestID, account_id })
+        const response = await $host.post(`api/document/send_document`, { dataToSend, requestID })
         return response
     } catch (error) {
         console.log('Ошибка при отправке документа: ', error)
@@ -118,7 +82,7 @@ export const sendInformationAboutStaffing = async (dataToSend, requestID, accoun
 
 export const sendDocumentGroup = async (requestID) => {
     try {
-        const response = await $host.post(`api/document/send_document_group`, { requestID })
+        const response = await $host.post(`api/document/send_documents_group`, { requestID })
         return response
     } catch (error) {
         console.log('Ошибка при отправке группы документов: ', error)

@@ -3,23 +3,24 @@ import { Form, Button, Container, Card, Modal, Spinner, Col } from "react-bootst
 import InputField from "../../CustomComponents/InputFields/InputField";
 import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { exportEducationPlan, sendEducationalPlan } from '../../../http/documentAPI';
+import { exportEducationPlan, sendDocument } from '../../../http/documentAPI';
 import { renderAsync } from 'docx-preview';
 import DocumentFormField from '../../CustomComponents/InputFields/DocumentFormField'
 import ReviwerTools from "../../CustomComponents/Other/ReviewerTools";
 
-const EducationalPlanForm = ({ userData, requestID, commonData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
+const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
     const [modules, setModules] = useState([])
     const [showModal, setShowModal] = useState(false);
     const [validationErrors, setValidationErrors] = useState({});
     const [moduleValidationErrors, setModuleValidationErrors] = useState({})
     const containerRef = useRef(null);
+    const commonData = documentsData.commonData
     const educationFormOptions = [
         { label: 'Очная', value: 'Очная' },
         { label: 'Очно-заочная', value: 'Очно-заочная' },
         { label: 'Заочная', value: 'Заочная' },
     ]
-        
+
     useEffect(() => {
         if (commonData && Object.keys(commonData?.modules).length > 0)
             setModules(commonData?.modules || [])
@@ -151,8 +152,13 @@ const EducationalPlanForm = ({ userData, requestID, commonData, setDocumentsData
         });
     };
 
-    const sendDocument = () => {
-        sendEducationalPlan(commonData, requestID, userData?.id)
+    const sendThisDocument = () => {
+        const dataToSend = {
+            ...documentsData,
+            EDP: true
+        }
+        setDocumentsData(dataToSend)
+        sendDocument(dataToSend, requestID)
     }
 
     const validateForm = () => {
@@ -218,7 +224,7 @@ const EducationalPlanForm = ({ userData, requestID, commonData, setDocumentsData
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!validateForm()) return
-        sendDocument()
+        sendThisDocument()
         onSave()
     };
 
@@ -226,7 +232,7 @@ const EducationalPlanForm = ({ userData, requestID, commonData, setDocumentsData
         <Container className='mt-4'>
             <Form onSubmit={handleSubmit}>
                 {isChecking && (
-                    <ReviwerTools/>
+                    <ReviwerTools />
                 )}
                 <Col style={{ display: 'flex', justifyContent: 'flex-end' }}>
                     {isEditable && (

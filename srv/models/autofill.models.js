@@ -1,4 +1,4 @@
-const { userRole, typeGraduationDoc, ksuDepartment, programType, education, groupStatus, documentType, requestStep, lessonShedule } = require('./models');
+const { userRole, typeGraduationDoc, ksuDepartment, programType, education, groupStatus, requestStep, lessonShedule } = require('./models');
 
 
 // Функция для заполнения справочных таблиц
@@ -72,17 +72,6 @@ async function fillDatabase() {
             { name: 'Необходима корректировка' },
             { name: 'Одобрено' },
             { name: 'Отказано' },
-        ], {
-            ignoreDuplicates: true,
-        });
-
-        // Заполнение таблицы document_type
-        await documentType.bulkCreate([
-            { name: 'Аннотация ДОП' },
-            { name: 'Учебный план' },
-            { name: 'Учебно-тематический план' },
-            { name: 'Обеспечение образовательного процесса' },
-            { name: 'Сведения о кадровом обеспечении' },
         ], {
             ignoreDuplicates: true,
         });

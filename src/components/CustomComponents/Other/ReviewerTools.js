@@ -1,6 +1,51 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Alert, Button, Col, Row } from 'react-bootstrap';
-import { goToEditState, sendAnnotation } from '../../../http/documentAPI';
+import { goToEditState, sendDocument } from '../../../http/documentAPI';
+
+const fieldsByDoc = {
+    ANN: [
+        'commonData.program.program_type',
+        'commonData.program.program_name',
+        'commonData.program.standart_compliance',
+        'commonData.program.program_goal',
+        'commonData.program.listeners_category',
+        'commonData.hours.academic',
+        'commonData.hours.overall',
+        'commonData.lesson.count',
+        'commonData.lesson.duration',
+    ],
+    EDP: [
+        'commonData.program.program_goal',
+        'commonData.program.listeners_category',
+        'commonData.program.education_form',
+        'commonData.hours.academic',
+        'commonData.lesson.count',
+        'commonData.lesson.duration',
+    ],
+    ETP: [
+        'commonData.program.program_goal',
+        'commonData.program.standart_compliance',
+        'commonData.program.education_form',
+    ],
+    EEP: [], // нет полей для проверки
+    IAS: [], // нет полей для проверки
+};
+
+// Проверяем, есть ли ошибки по заданным полям в commonData.errors
+const hasErrorsForFields = (fields, commonDataErrors) => {
+    for (const fieldPath of fields) {
+        // Для проверки ошибки нужно взять поле из errors, которое совпадает с последним ключом из пути
+        // Например: для commonData.program.program_name -> errors.program.program_name
+        const keys = fieldPath.split('.');
+        if (keys.length < 3) continue; // Структура: commonData.*.*
+        const errorSection = commonDataErrors?.[keys[1]];
+        const errorField = keys[2];
+        if (errorSection && errorSection[errorField]) {
+            return true;
+        }
+    }
+    return false;
+};
 
 const ReviwerTools = ({ requestID, isAnnotation, dataToSend }) => {
 
@@ -8,17 +53,42 @@ const ReviwerTools = ({ requestID, isAnnotation, dataToSend }) => {
         console.log('DECLINE')
     }
 
+    const checkAndUpdateFlags = (data) => {
+        if (!data || !data.commonData) return data;
+
+        // Создаем копию данных, чтобы не мутировать пропсы
+        const newData = { ...data };
+
+        // Для каждого документа проверяем ошибки и ставим флаг false, если ошибки есть
+        ['ANN', 'EDP', 'EEP', 'ETP', 'IAS'].forEach((docKey) => {
+            const fieldsToCheck = fieldsByDoc[docKey] || [];
+            if (fieldsToCheck.length === 0) {
+                // Если полей нет, не меняем флаг
+                return;
+            }
+            const errors = newData.commonData.errors || {};
+            if (hasErrorsForFields(fieldsToCheck, errors)) {
+                newData[docKey] = false;
+            }
+        });
+
+        return newData;
+    };
 
     const Edit = () => {
         if (dataToSend) {
-            console.log(dataToSend)
-            sendAnnotation(dataToSend, requestID)
-            goToEditState(requestID)
+            const updatedData = checkAndUpdateFlags(dataToSend);
+            sendDocument(updatedData, requestID);
+            goToEditState(requestID);
         }
     }
 
     const Accept = () => {
-        console.log('ACCEPT')
+        if (dataToSend) {
+            const updatedData = checkAndUpdateFlags(dataToSend);
+            sendDocument(updatedData, requestID);
+            console.log('ACCEPT');
+        }
     }
 
     return (

@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Form, Button, Container, Card, Modal, Spinner, Alert, Col, InputGroup, Row } from "react-bootstrap";
+import { Form, Button, Container, Card, Modal, Spinner, Alert, Col } from "react-bootstrap";
 import InputField from "../../CustomComponents/InputFields/InputField";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { exportAnnotation, sendAnnotation } from '../../../http/documentAPI';
+import { exportAnnotation, sendDocument } from '../../../http/documentAPI';
 import { renderAsync } from 'docx-preview';
 import AspectGroup from "../../PrimaryFormComponents/Aspect/AspectGroup";
 import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup";
@@ -10,7 +10,7 @@ import EducationTechGroup from "../../AnnotationFormComponents/EducationTechGrou
 import DocumentFormField from "../../CustomComponents/InputFields/DocumentFormField";
 import ReviwerTools from "../../CustomComponents/Other/ReviewerTools";
 
-const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
+const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
 
     const [showModal, setShowModal] = useState(false);
     const containerRef = useRef(null);
@@ -20,6 +20,8 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
     const [benefitsAlert, setBenefitsAlert] = useState(false)
     const [validationErrors, setValidationErrors] = useState({});
     const [technologyValidationErrors, setTechnologyValidationErrors] = useState({})
+    const commonData = documentsData.commonData
+    const annotationData = documentsData.annotation
     const controlFormOptions = [
         { label: 'Зачет', value: 'Зачет' },
         { label: 'Экзамен', value: 'Экзамен' },
@@ -54,7 +56,7 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
 
 
     useEffect(() => {
-        if (annotationData?.errors || commonData?.errors) {
+        if ((annotationData?.errors || commonData?.errors) && !isChecking) {
             const annotationErrors = flattenErrors(annotationData?.errors || {});
             const commonErrors = flattenErrors(commonData?.errors || {});
             setValidationErrors({
@@ -64,10 +66,14 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
         }
     }, [annotationData?.errors, commonData?.errors]);
 
+    const sendThisDocument = async () => {
+        const dataToSend = {
+            ...documentsData,
+            ANN: true
+        }
+        setDocumentsData(dataToSend)
 
-
-    const sendDocument = async (dataToSend) => {
-        await sendAnnotation(dataToSend, requestID)
+        sendDocument(dataToSend, requestID)
     }
 
     const handleTechnologyChange = (index, updatedTechnology) => {
@@ -169,19 +175,12 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
 
             // Решаем, куда писать: в commonData или в annotation
             if (
-                name.startsWith('annotation.program') ||
-                name.startsWith('annotation.ksu') ||
-                name.startsWith('annotation.error') ||
-                name.startsWith('annotation.checkbox')
+                name.startsWith('annotation')
             ) {
                 const path = name.replace(/^annotation\./, '');
                 updateNestedData(updated.annotation, path, value);
             } else if (
-                name.startsWith('commonData.program') ||
-                name.startsWith('commonData.lesson') ||
-                name.startsWith('commonData.hours') ||
-                name.startsWith('commonData.error') ||
-                name.startsWith('commonData.checkbox')
+                name.startsWith('commonData')
             ) {
                 const path = name.replace(/^commonData\./, '');
                 updateNestedData(updated.commonData, path, value);
@@ -261,7 +260,7 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!validateForm()) return;
-        sendDocument({ annotationData, commonData })
+        sendThisDocument()
         onSave()
     };
 
@@ -270,7 +269,7 @@ const AnnotationForm = ({ userData, requestID, annotationData, commonData, setDo
             <Form onSubmit={handleSubmit}>
                 {isChecking && (
                     <ReviwerTools isAnnotation
-                        dataToSend={{ annotationData, commonData }}
+                        dataToSend={documentsData}
                         requestID={requestID}
                     />
                 )}

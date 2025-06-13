@@ -2,7 +2,7 @@ import { Row, Col, Card, Container, Button, Modal, Spinner } from 'react-bootstr
 import InputField from '../../CustomComponents/InputFields/InputField'
 import { useEffect, useRef, useState } from 'react'
 import { renderAsync } from 'docx-preview'
-import { exportInformationAboutStaffing, sendInformationAboutStaffing } from '../../../http/documentAPI'
+import { exportInformationAboutStaffing, sendDocument } from '../../../http/documentAPI'
 import ReviwerTools from '../../CustomComponents/Other/ReviewerTools'
 
 const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersList, setTeachersList, setDocumentsData, moduleErrors }) => {
@@ -252,12 +252,13 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
   )
 }
 
-const InformationAboutStaffingForm = ({ userData, commonData, setDocumentsData, isEditable, isChecking, onChange, requestID, onSave }) => {
+const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEditable, isChecking, onChange, requestID, onSave }) => {
 
   const [showModal, setShowModal] = useState(false);
   const containerRef = useRef(null);
   const [modules, setModules] = useState([])
   const [moduleErrors, setModuleErrors] = useState({});
+  const commonData = documentsData.commonData
   const [teachersList, setTeachersList] = useState([
     { value: 'Иванов И.И., доцент', label: 'Иванов И.И., доцент', workplace: 'Работа', education: 'Среднее', degree: 'Крутой', experience_total: '2', experience_subject: '1' },
     { value: 'Петрова Н.Н., старший преподаватель', label: 'Петрова Н.Н., старший преподаватель' }
@@ -302,9 +303,15 @@ const InformationAboutStaffingForm = ({ userData, commonData, setDocumentsData, 
     return Object.keys(errors).length === 0;
   };
 
-  const sendDocument = () => {
+  const sendThisDocument = () => {
     if (!validateModules()) return
-    sendInformationAboutStaffing(commonData, requestID, userData?.id)
+    const dataToSend = {
+      ...documentsData,
+      IAS: true
+    }
+    setDocumentsData(dataToSend)
+
+    sendDocument(dataToSend, requestID)
     onSave()
   }
 
@@ -352,7 +359,7 @@ const InformationAboutStaffingForm = ({ userData, commonData, setDocumentsData, 
       )}
       <Col style={{ display: 'flex', justifyContent: 'flex-end' }}>
         {isEditable && (
-          <Button className='mb-3' style={{ backgroundColor: 'rgb(27, 154, 233)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={sendDocument}>Сохранить</Button>
+          <Button className='mb-3' style={{ backgroundColor: 'rgb(27, 154, 233)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={sendThisDocument}>Сохранить</Button>
         )}
         <Button className='mb-3 ms-2' style={{ backgroundColor: 'rgb(80, 180, 130)', border: '1px solid rgba(0, 0, 0, .1)', fontWeight: '500' }} onClick={handleViewDoc} >Предпросмотр документа</Button>
       </Col>

@@ -3,13 +3,13 @@ import { Form, Button, Container, Card, Modal, Spinner, Col } from "react-bootst
 import InputField from "../../CustomComponents/InputFields/InputField";
 import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup";
 import "bootstrap/dist/css/bootstrap.min.css";
-import { exportEducationAndThematicPlan, sendEducationAndThematicPlan } from '../../../http/documentAPI';
+import { exportEducationAndThematicPlan, sendDocument } from '../../../http/documentAPI';
 import { renderAsync } from 'docx-preview';
 import AspectGroup from "../../PrimaryFormComponents/Aspect/AspectGroup";
 import DocumentFormField from "../../CustomComponents/InputFields/DocumentFormField";
 import ReviwerTools from "../../CustomComponents/Other/ReviewerTools";
 
-const EducationalAndThematicPlanForm = ({ userData, requestID, commonData, setDocumentsData, onChange, onSave, isEditable, isChecking}) => {
+const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking}) => {
     const [modules, setModules] = useState([])
     const [aspects, setAspects] = useState([])
     const [validationErrors, setValidationErrors] = useState({})
@@ -17,6 +17,7 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, commonData, setDo
     const [aspectValidationErrors, setAspectValidationErrors] = useState({})
     const [showModal, setShowModal] = useState(false);
     const containerRef = useRef(null);
+    const commonData = documentsData.commonData
     const educationFormOptions = [
         { label: 'Очная', value: 'Очная' },
         { label: 'Очно-заочная', value: 'Очно-заочная' },
@@ -305,14 +306,20 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, commonData, setDo
     }
 
 
-    const sendDocument = () => {
-        sendEducationAndThematicPlan(commonData, requestID, userData?.id)
+    const sendThisDocument = () => {
+        const dataToSend = {
+            ...documentsData,
+            ETP: true
+        }
+        setDocumentsData(dataToSend)
+        
+        sendDocument(dataToSend, requestID)
     }
 
     const handleSubmit = (e) => {
         e.preventDefault();
         if (!validateForm()) return
-        sendDocument()
+        sendThisDocument()
         onSave()
     };
 
