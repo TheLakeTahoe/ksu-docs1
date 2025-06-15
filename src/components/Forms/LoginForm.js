@@ -1,75 +1,78 @@
-import { useState, useEffect } from 'react';
-import { Col, Button, Form, Row, Alert } from 'react-bootstrap';
-import InputField from '../CustomComponents/InputFields/InputField';
-import { authorize } from '../../http/userAPI';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react'
+import { Col, Button, Form, Row, Alert } from 'react-bootstrap'
+import InputField from '../CustomComponents/InputFields/InputField'
+import { authorize } from '../../http/userAPI'
+import { useNavigate } from 'react-router-dom'
 import './Forms.css'
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext'
 
 function LoginForm({ updateHeight }) {
     const [formValues, setFormValues] = useState({
         loginOrEmail: '',
         password: ''
-    });
+    })
     const [errors, setErrors] = useState({})
     const [failure, setFailure] = useState('')
     const [showPassword, setShowPassword] = useState(false)
     const { login } = useAuth()
 
     useEffect(() => {
-        updateHeight();
-    }, [errors, updateHeight]);
+        updateHeight()
+    }, [failure, errors, updateHeight])
 
     const handleLogin = async () => {
-        setFailure('');
-        const response = await authorize(formValues);
-        if (!response?.token) setFailure(response.message);
+        setFailure('')
+        const response = await authorize(formValues)
+        if (!response?.token) setFailure(response.message)
         else login(response.token)
-    };
+    }
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormValues({ ...formValues, [name]: value });
-    };
+        const { name, value } = e.target
+        setFormValues({ ...formValues, [name]: value })
+    }
 
     const fieldLabels = {
         loginOrEmail: 'Логин или Email',
         password: 'Пароль'
-    };
+    }
 
     const validateForm = (values) => {
-        const newErrors = {};
-        const { loginOrEmail, password } = values;
+        const newErrors = {}
+        const { loginOrEmail, password } = values
 
-        if (!loginOrEmail) newErrors.loginOrEmail = 'Поле не должно быть пустым';
-        else if (loginOrEmail.length < 5 || loginOrEmail.length > 20) newErrors.loginOrEmail = 'Логин должен содержать от 5 до 20 символов.';
-        else if (!/^[a-zA-Z0-9]+$/.test(loginOrEmail)) newErrors.loginOrEmail = 'Логин может содержать только буквы и цифры.';
+        if (!loginOrEmail) newErrors.loginOrEmail = 'Поле не должно быть пустым'
+        else if (loginOrEmail.length < 5 || loginOrEmail.length > 20) newErrors.loginOrEmail = 'Логин должен содержать от 5 до 20 символов.'
+        else if (!/^[a-zA-Z0-9]+$/.test(loginOrEmail)) newErrors.loginOrEmail = 'Логин может содержать только буквы и цифры.'
 
-        if (!password) newErrors.password = 'Поле не должно быть пустым';
-        else if (password.length < 8) newErrors.password = 'Пароль должен содержать минимум 8 символов.';
-        else if (!/[A-Z]/.test(password)) newErrors.password = 'Пароль должен содержать хотя бы одну заглавную букву.';
-        else if (!/\d/.test(password)) newErrors.password = 'Пароль должен содержать хотя бы одну цифру.';
+        if (!password) newErrors.password = 'Поле не должно быть пустым'
+        else if (password.length < 8) newErrors.password = 'Пароль должен содержать минимум 8 символов.'
+        else if (!/[A-Z]/.test(password)) newErrors.password = 'Пароль должен содержать хотя бы одну заглавную букву.'
+        else if (!/\d/.test(password)) newErrors.password = 'Пароль должен содержать хотя бы одну цифру.'
 
-        return newErrors;
-    };
+        return newErrors
+    }
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-        const newErrors = validateForm(formValues);
+        e.preventDefault()
+        const newErrors = validateForm(formValues)
 
-        if (Object.keys(newErrors).length === 0) {
-            setErrors({});
-            handleLogin();
-            if (failure)
-                setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) {
+            setErrors(newErrors)
         }
-    };
+        else {
+            setErrors({})
+            handleLogin()
+            if (failure)
+                setErrors(newErrors)
+        }
+    }
 
     const handleKeyPress = (e) => {
         if (e.key === ' ') {
-            e.preventDefault();
+            e.preventDefault()
         }
-    };
+    }
 
     return (
         <Form className="login-form-container" noValidate onSubmit={handleSubmit}>
@@ -105,7 +108,7 @@ function LoginForm({ updateHeight }) {
                 </Col>
             </Row>
         </Form>
-    );
+    )
 }
 
-export default LoginForm;
+export default LoginForm

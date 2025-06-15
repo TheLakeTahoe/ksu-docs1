@@ -1,27 +1,27 @@
-import React, { useEffect } from "react";
-import { Container } from "react-bootstrap";
-import CustomNavbar from "../components/CustomComponents/Other/Navbar";
-import AuthForms from "../components/Forms/AuthForms";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
-import { Spinner } from "react-bootstrap";
+import React, { useEffect } from "react"
+import { Container } from "react-bootstrap"
+import CustomNavbar from "../components/CustomComponents/Other/Navbar"
+import AuthForms from "../components/Forms/AuthForms"
+import { useNavigate } from "react-router-dom"
+import { useAuth } from "../context/AuthContext"
+import { Spinner } from "react-bootstrap"
 
 function AuthPage() {
-    const navigate = useNavigate();
-    const { user, isLoading } = useAuth();
+    const navigate = useNavigate()
+    const { user, isLoading } = useAuth()
 
     useEffect(() => {
         if (!isLoading && user) {
-            navigate('/main');
+            navigate('/main')
         }
-    }, [user, isLoading, navigate]);
+    }, [user, isLoading, navigate])
     
     if (isLoading) {
         return (
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
                 <Spinner animation="border" />
             </div>
-        );
+        )
     }
 
     return (
@@ -31,7 +31,7 @@ function AuthPage() {
                 <AuthForms />
             </Container>
         </Container>
-    );
+    )
 }
 
-export default AuthPage;
+export default AuthPage

@@ -1,35 +1,33 @@
-import { useContext, useEffect, useState } from 'react';
-import { Tab, Tabs, Container, Col, Button, Modal, Toast, ToastContainer } from 'react-bootstrap';
-import AnnotationForm from '../components/Forms/Documents/AnnotationForm';
-import CustomNavbar from '../components/CustomComponents/Other/Navbar';
-import { useLocation, useNavigate } from 'react-router-dom';
-import EducationalPlanForm from '../components/Forms/Documents/EducationalPlanForm';
-import { DocumentsContext } from '../context/DocumentsContext';
-import { fillDocuments } from '../utils/fillDocumentsData';
-import EducationalAndThematicPlanForm from '../components/Forms/Documents/EducationalAndThematicPlanForm';
-import InformationAboutStaffingForm from '../components/Forms/Documents/InformationAboutStaffing';
-import EnsuringTheEducationalProccessForm from '../components/Forms/Documents/EnsuringTheEducationalProccess';
-import { getRequestDocuments } from '../http/requestAPI';
-import { useAuth } from '../context/AuthContext';
-import { getDocumentsData, sendDocumentGroup } from '../http/documentAPI';
+import { useContext, useEffect, useState } from 'react'
+import { Tab, Tabs, Container, Col, Button, Modal, Toast, ToastContainer } from 'react-bootstrap'
+import AnnotationForm from '../components/Forms/Documents/AnnotationForm'
+import CustomNavbar from '../components/CustomComponents/Other/Navbar'
+import { useLocation, useNavigate } from 'react-router-dom'
+import EducationalPlanForm from '../components/Forms/Documents/EducationalPlanForm'
+import { DocumentsContext } from '../context/DocumentsContext'
+import { fillDocuments } from '../utils/fillDocumentsData'
+import EducationalAndThematicPlanForm from '../components/Forms/Documents/EducationalAndThematicPlanForm'
+import InformationAboutStaffingForm from '../components/Forms/Documents/InformationAboutStaffing'
+import EnsuringTheEducationalProccessForm from '../components/Forms/Documents/EnsuringTheEducationalProccess'
+import { useAuth } from '../context/AuthContext'
+import { getDocumentsData, sendDocumentGroup } from '../http/documentAPI'
 
 function DocumentsPage() {
-  const [key, setKey] = useState('1');
-  const [showModal, setShowModal] = useState(false);
+  const [key, setKey] = useState('1')
+  const [showModal, setShowModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [showToast, setShowToast] = useState(false);
+  const [showToast, setShowToast] = useState(false)
   const [requestDocuments, setRequestDocuments] = useState()
   const { documentsData, setDocumentsData } = useContext(DocumentsContext)
   const commonDataFieldsName = useContext(DocumentsContext)
-  const { user } = useAuth()
+  const { user, isLoading } = useAuth()
 
   const location = useLocation()
   const navigate = useNavigate()
-  const { requestID, isEditable, isChecking } = location.state || {};
-  console.log(isEditable)
+  const { requestID, isEditable, isChecking } = location.state || {}
 
   useEffect(() => {
-    if (!user)
+    if (!user && !isLoading)
       navigate('/auth')
   }, [user])
 
@@ -48,14 +46,14 @@ function DocumentsPage() {
   const handleCommonDataEdit = (field_name) => {
     const changedTabs = Object.entries(commonDataFieldsName.commonDataFieldsName)
       .filter(([_, fields]) => Array.isArray(fields) && fields.includes(field_name))
-      .map(([tabKey]) => Number(tabKey));
+      .map(([tabKey]) => Number(tabKey))
 
     if (changedTabs)
       changedTabs.forEach(element => {
         updateTabState(element, 'editing')
-      });
+      })
 
-  };
+  }
 
   console.log(requestDocuments)
 
@@ -67,7 +65,7 @@ function DocumentsPage() {
     3: 'notSent',
     4: 'notSent',
     5: 'notSent'
-  });
+  })
 
   useEffect(() => {
     const updatedTabStates = {
@@ -80,7 +78,7 @@ function DocumentsPage() {
     setTabStates(updatedTabStates)
 
     if (Object.values(updatedTabStates).every(s => s === 'sent') && isEditable) {
-      setShowModal(true);
+      setShowModal(true)
     }
 
   }, [requestDocuments])
@@ -88,20 +86,20 @@ function DocumentsPage() {
   // Функция обновления Состояния вкладки
   const updateTabState = (tabKey, state) => {
     setTabStates(prevState => {
-      const newState = { ...prevState, [tabKey]: state };
+      const newState = { ...prevState, [tabKey]: state }
 
       // Если все вкладки стали "sent" – показываем модальное окно
       if (Object.values(newState).every(s => s === 'sent')) {
-        setShowModal(true);
+        setShowModal(true)
       }
 
       if (state === 'editing') {
-        setShowToast(false);
+        setShowToast(false)
       }
 
-      return newState;
-    });
-  };
+      return newState
+    })
+  }
 
   const sendDocuments = async () => {
     const response = await sendDocumentGroup(requestID)
@@ -116,7 +114,7 @@ function DocumentsPage() {
       setShowToast(false)
       setShowSuccessModal(true)
     }
-  };
+  }
 
   return (
     <Container className='hide-scrollbar' style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -203,8 +201,8 @@ function DocumentsPage() {
       <Modal
         show={showModal}
         onHide={() => {
-          setShowModal(false);
-          setShowToast(true); // Если закрыл окно – показываем тост
+          setShowModal(false)
+          setShowToast(true) // Если закрыл окно – показываем тост
         }}
         centered
         backdrop="static" // Запрещает клик по фону
@@ -216,8 +214,8 @@ function DocumentsPage() {
         <Modal.Body>Все документы успешно заполнены и могут быть отправлены.</Modal.Body>
         <Modal.Footer>
           <Button variant="outline-secondary" onClick={() => {
-            setShowModal(false);
-            setShowToast(true); // Если закрыл окно – показываем тост
+            setShowModal(false)
+            setShowToast(true) // Если закрыл окно – показываем тост
           }} >
             Закрыть
           </Button>
@@ -230,20 +228,20 @@ function DocumentsPage() {
       <Modal
         show={showSuccessModal}
         onHide={() => {
-          setShowSuccessModal(false);
+          setShowSuccessModal(false)
         }}
         centered
         backdrop="static" // Запрещает клик по фону
         dialogClassName="modal-custom" // Добавим кастомный класс
       >
-        <Modal.Header closeButton>
+        <Modal.Header>
           <Modal.Title>Документы отправлены</Modal.Title>
         </Modal.Header>
         <Modal.Body>Документы успешно отправлены на проверку.</Modal.Body>
         <Modal.Footer>
           <Button variant="primary" onClick={() => {
             navigate('/main')
-            setShowSuccessModal(false);
+            setShowSuccessModal(false)
           }} >
             Закрыть
           </Button>
@@ -273,7 +271,7 @@ function DocumentsPage() {
         </Toast>
       </ToastContainer>
     </Container>
-  );
+  )
 }
 
-export default DocumentsPage;
+export default DocumentsPage

@@ -98,6 +98,7 @@ const MainDataForm = ({ onNext, formData, updateFormData, updateHeight }) => {
                     onChange={handleChange}
                     onKeyPress={handleKeyPress}
                     name={field}
+                    isPassword={field.includes('password') || field.includes('confirmPassword')}
                     isPhoneNumber={field === 'phone'}
                     error={errors[field]}
                 />

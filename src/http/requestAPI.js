@@ -6,7 +6,7 @@ export const sendRequest = async (formValues) => {
         return response
 
     } catch (error) {
-        console.log('Ошибка входа: ', error)
+        console.error('Ошибка входа: ', error)
     }
 }
 
@@ -16,7 +16,7 @@ export const getUserRequests = async (account_id) => {
         return response
 
     } catch (error) {
-        console.log('Ошибка входа: ', error)
+        console.error('Ошибка входа: ', error)
     }
 }
 
@@ -26,6 +26,6 @@ export const getRequestDocuments = async (primary_form_id) => {
         return response
 
     } catch (error) {
-        console.log('Ошибка входа: ', error)
+        console.error('Ошибка входа: ', error)
     }
 }

@@ -1,6 +1,6 @@
-import logo from '../assets/logo/MainLogo.jpg';
-import { Container, Navbar } from 'react-bootstrap';
-import 'bootstrap/dist/css/bootstrap.min.css';
+import logo from '../assets/logo/MainLogo.jpg'
+import { Container, Navbar } from 'react-bootstrap'
+import 'bootstrap/dist/css/bootstrap.min.css'
 
 function Navigate() {
   return (
@@ -15,7 +15,7 @@ function Navigate() {
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  );
+  )
 }
 
-export default Navigate;
+export default Navigate

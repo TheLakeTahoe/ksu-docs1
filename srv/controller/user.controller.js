@@ -102,13 +102,11 @@ class UserController {
         }
     }
 
-
     // Регистрация 
     async createUser(req, res) {
         try {
-            const { education_id, login, email, password, phone, position, f_name, m_name, l_name, workExperience, workplace } = req.body
+            const { education_id, login, email, password, phone, position, full_name, workExperience, workplace, ksu_department } = req.body
 
-            const fullName = f_name + " " + m_name + " " + l_name
             const roleID = 2
             const saltRounds = 10
             const password_hash = await bcrypt.hash(password, saltRounds)
@@ -157,15 +155,25 @@ class UserController {
                 workplaceID = workplaceCheck[0].id
             }
 
+            let departmentID
+            const departmentCheck = await db.query(
+                `Select id From ksu_departments
+                 Where name = $1`, {
+                bind: [ksu_department || null],
+                type: QueryTypes.SELECT
+            })
+
+            departmentID = departmentCheck[0]?.id || null
+
             const userID = await db.query(
-                `Insert Into accounts (role_id, education_id, login, email, password, phone, position_id, full_name, work_experience, workplace_id, created)
-                 Values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) Returning id`, {
-                bind: [roleID, education_id, login, email, password_hash, phone, positionID, fullName, workExperience, workplaceID],
+                `Insert Into accounts (role_id, education_id, login, email, password, phone, position_id, full_name, work_experience, workplace_id, ksu_department_id, created)
+                 Values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW()) Returning id`, {
+                bind: [roleID, education_id, login, email, password_hash, phone, positionID, full_name, workExperience, workplaceID, departmentID],
                 type: QueryTypes.INSERT
             })
 
             const token = jwt.sign(
-                { id: userID[0][0].id, phone: phone, email: email, full_name: fullName, role_id: roleID },
+                { id: userID[0][0].id, phone: phone, email: email, full_name: full_name, role_id: roleID },
                 SECRET_KEY,
                 { expiresIn: '24h' }
             )

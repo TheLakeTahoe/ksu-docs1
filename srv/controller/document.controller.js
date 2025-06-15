@@ -1,7 +1,7 @@
-const fs = require('fs');
-const PizZip = require('pizzip');
-const Docxtemplater = require('docxtemplater');
-const { QueryTypes } = require('sequelize');
+const fs = require('fs')
+const PizZip = require('pizzip')
+const Docxtemplater = require('docxtemplater')
+const { QueryTypes } = require('sequelize')
 const db = require('../db.js')
 
 class DocumentController {
@@ -19,8 +19,8 @@ class DocumentController {
             return res.json(doc_data)
 
         } catch (error) {
-            console.error('Ошибка при получении данных:', error);
-            res.status(500).send('Ошибка при получении данных');
+            console.error('Ошибка при получении данных:', error)
+            res.status(500).send('Ошибка при получении данных')
         }
     }
 
@@ -28,28 +28,28 @@ class DocumentController {
     async exportAnnotation(req, res) {
         try {
             const { annotationData, commonData } = req.query.formValues
-            const templatePath = './templates/AnnotationDOP.docx';
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip);
+            const templatePath = './templates/AnnotationDOP.docx'
+            const content = fs.readFileSync(templatePath, 'binary')
+            const zip = new PizZip(content)
+            const doc = new Docxtemplater(zip)
 
             const learningOutcomes = commonData.aspects.reduce((acc, { name, type }) => {
                 if (!acc[type]) {
-                    acc[type] = [];
+                    acc[type] = []
                 }
-                acc[type].push(name);
-                return acc;
-            }, {});
+                acc[type].push(name)
+                return acc
+            }, {})
 
             const numberedModules = commonData.modules.map((module, index) => ({
                 number: (index + 1).toString(),
                 name: module.name,
                 hours: module.h_overall
-            }));
+            }))
 
 
 
-            const technologiesName = annotationData.technologies ? annotationData.technologies.map(item => item.name) : [];
+            const technologiesName = annotationData.technologies ? annotationData.technologies.map(item => item.name) : []
 
             const data = {
                 //* ОБЩИЕ ДАННЫЕ *//
@@ -82,28 +82,28 @@ class DocumentController {
                 learningOutcomes: learningOutcomes,
                 modules: numberedModules,
                 technologies: technologiesName,
-            };
+            }
 
             // Передача данных через render
-            doc.render(data);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+            doc.render(data)
+            const buf = doc.getZip().generate({ type: 'nodebuffer' })
 
-            res.setHeader('Content-Disposition', 'attachment; filename=filled_template.docx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.send(buf);
+            res.setHeader('Content-Disposition', 'attachment filename=filled_template.docx')
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            res.send(buf)
         } catch (error) {
-            console.error('Ошибка при генерации документа:', error);
-            res.status(500).send('Ошибка при генерации документа');
+            console.error('Ошибка при генерации документа:', error)
+            res.status(500).send('Ошибка при генерации документа')
         }
     }
 
     async exportEducationalPlan(req, res) {
         try {
             const { commonData } = req.query.formValues
-            const templatePath = './templates/EducationalPlan.docx';
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip);
+            const templatePath = './templates/EducationalPlan.docx'
+            const content = fs.readFileSync(templatePath, 'binary')
+            const zip = new PizZip(content)
+            const doc = new Docxtemplater(zip)
 
             const numberedModules = commonData.modules.map((module, index) => ({
                 number: (index + 1).toString(),
@@ -115,16 +115,16 @@ class DocumentController {
                 h_sr: module.h_sr || '0',
                 control_form: module.control_form || 'Отсутствует',
 
-            }));
+            }))
 
             const totals = commonData.modules.reduce(
                 (acc, module) => {
-                    acc.sum_h_overall += Number(module.h_overall || 0);
-                    acc.sum_h_lk += Number(module.h_lk || 0);
-                    acc.sum_h_lb += Number(module.h_lb || 0);
-                    acc.sum_h_pr += Number(module.h_pr || 0);
-                    acc.sum_h_sr += Number(module.h_sr || 0);
-                    return acc;
+                    acc.sum_h_overall += Number(module.h_overall || 0)
+                    acc.sum_h_lk += Number(module.h_lk || 0)
+                    acc.sum_h_lb += Number(module.h_lb || 0)
+                    acc.sum_h_pr += Number(module.h_pr || 0)
+                    acc.sum_h_sr += Number(module.h_sr || 0)
+                    return acc
                 },
                 {
                     sum_h_overall: 0,
@@ -133,7 +133,7 @@ class DocumentController {
                     sum_h_pr: 0,
                     sum_h_sr: 0
                 }
-            );
+            )
 
             const data = {
                 programType: commonData.program.program_type || '',
@@ -151,28 +151,28 @@ class DocumentController {
                 modules: numberedModules,
 
                 ...totals
-            };
+            }
 
             // Передача данных через render
-            doc.render(data);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+            doc.render(data)
+            const buf = doc.getZip().generate({ type: 'nodebuffer' })
 
-            res.setHeader('Content-Disposition', 'attachment; filename=filled_template.docx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.send(buf);
+            res.setHeader('Content-Disposition', 'attachment filename=filled_template.docx')
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            res.send(buf)
         } catch (error) {
-            console.error('Ошибка при генерации документа:', error);
-            res.status(500).send('Ошибка при генерации документа');
+            console.error('Ошибка при генерации документа:', error)
+            res.status(500).send('Ошибка при генерации документа')
         }
     }
 
     async exportEducationalAndThematicPlan(req, res) {
         try {
             const { commonData } = req.query.formValues
-            const templatePath = './templates/EducationalAndThematicPlan.docx';
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip);
+            const templatePath = './templates/EducationalAndThematicPlan.docx'
+            const content = fs.readFileSync(templatePath, 'binary')
+            const zip = new PizZip(content)
+            const doc = new Docxtemplater(zip)
 
             const numberedModules = commonData.modules.map((module, moduleIndex) => ({
                 number: (moduleIndex + 1).toString(),
@@ -193,7 +193,7 @@ class DocumentController {
                     sub_h_sr: sub['[h_sr]'] || '0',
                     sub_control_form: sub['[control_form]'] || 'Отсутствует',
                 }))
-            }));
+            }))
 
             const learningOutcomes = commonData.aspects.reduce((acc, { name, type }) => {
                 const map = {
@@ -227,34 +227,34 @@ class DocumentController {
                 learningOutcomes: learningOutcomes,
 
                 modules: numberedModules,
-            };
+            }
 
             // Передача данных через render
-            doc.render(data);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+            doc.render(data)
+            const buf = doc.getZip().generate({ type: 'nodebuffer' })
 
-            res.setHeader('Content-Disposition', 'attachment; filename=filled_template.docx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.send(buf);
+            res.setHeader('Content-Disposition', 'attachment filename=filled_template.docx')
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            res.send(buf)
         } catch (error) {
-            console.error('Ошибка при генерации документа:', error);
-            res.status(500).send('Ошибка при генерации документа');
+            console.error('Ошибка при генерации документа:', error)
+            res.status(500).send('Ошибка при генерации документа')
         }
     }
 
     async exportEnsuringTheEducationalProccess(req, res) {
         try {
             const { commonData } = req.query.formValues
-            const templatePath = './templates/EnsuringTheEducationalProccess.docx';
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip);
+            const templatePath = './templates/EnsuringTheEducationalProccess.docx'
+            const content = fs.readFileSync(templatePath, 'binary')
+            const zip = new PizZip(content)
+            const doc = new Docxtemplater(zip)
 
             const numberedModules = commonData.modules.map((module, moduleIndex) => ({
                 number: (moduleIndex + 1).toString(),
                 name: module.name || '',
                 ksu_data: module.ksu_data,
-            }));
+            }))
 
             const data = {
                 programType: commonData.program.program_type || '',
@@ -262,34 +262,34 @@ class DocumentController {
                 hours: commonData.hours.academic || '',
 
                 modules: numberedModules,
-            };
+            }
 
             // Передача данных через render
-            doc.render(data);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+            doc.render(data)
+            const buf = doc.getZip().generate({ type: 'nodebuffer' })
 
-            res.setHeader('Content-Disposition', 'attachment; filename=filled_template.docx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.send(buf);
+            res.setHeader('Content-Disposition', 'attachment filename=filled_template.docx')
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            res.send(buf)
         } catch (error) {
-            console.error('Ошибка при генерации документа:', error);
-            res.status(500).send('Ошибка при генерации документа');
+            console.error('Ошибка при генерации документа:', error)
+            res.status(500).send('Ошибка при генерации документа')
         }
     }
 
     async exportInformationAboutStaffing(req, res) {
         try {
             const { commonData } = req.query.formValues
-            const templatePath = './templates/InformationAboutStaffing.docx';
-            const content = fs.readFileSync(templatePath, 'binary');
-            const zip = new PizZip(content);
-            const doc = new Docxtemplater(zip);
+            const templatePath = './templates/InformationAboutStaffing.docx'
+            const content = fs.readFileSync(templatePath, 'binary')
+            const zip = new PizZip(content)
+            const doc = new Docxtemplater(zip)
 
             const numberedModules = commonData.modules.map((module, moduleIndex) => ({
                 number: (moduleIndex + 1).toString(),
                 name: module.name || '',
                 teacher: module.teacher,
-            }));
+            }))
 
             const data = {
                 programType: commonData.program.program_type || '',
@@ -297,18 +297,18 @@ class DocumentController {
                 hours: commonData.hours.academic || '',
 
                 modules: numberedModules,
-            };
+            }
 
             // Передача данных через render
-            doc.render(data);
-            const buf = doc.getZip().generate({ type: 'nodebuffer' });
+            doc.render(data)
+            const buf = doc.getZip().generate({ type: 'nodebuffer' })
 
-            res.setHeader('Content-Disposition', 'attachment; filename=filled_template.docx');
-            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-            res.send(buf);
+            res.setHeader('Content-Disposition', 'attachment filename=filled_template.docx')
+            res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+            res.send(buf)
         } catch (error) {
-            console.error('Ошибка при генерации документа:', error);
-            res.status(500).send('Ошибка при генерации документа');
+            console.error('Ошибка при генерации документа:', error)
+            res.status(500).send('Ошибка при генерации документа')
         }
     }
 
@@ -334,7 +334,7 @@ class DocumentController {
                     type: QueryTypes.INSERT
                 })
 
-                documentID = newDocument[0][0].id;
+                documentID = newDocument[0][0].id
 
                 const response = await db.query(`Update document_groups
                                                  Set documents_id=$1
@@ -359,8 +359,8 @@ class DocumentController {
 
 
         } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
+            console.error('Ошибка при отправке документа:', error)
+            res.status(500).send('Ошибка при отправке документа')
         }
     }
 
@@ -381,16 +381,14 @@ class DocumentController {
 
 
         } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
+            console.error('Ошибка при отправке документа:', error)
+            res.status(500).send('Ошибка при отправке документа')
         }
     }
-
 
     async goToEditState(req, res) {
         try {
             const { requestID } = req.body
-            console.log('REQUEST ID: ', requestID)
 
             const response = await db.query(`Update document_groups
                                             Set group_status_id=4, step_id=$2
@@ -404,10 +402,72 @@ class DocumentController {
 
 
         } catch (error) {
-            console.error('Ошибка при отправке документа:', error);
-            res.status(500).send('Ошибка при отправке документа');
+            console.error('Ошибка при отправке документа:', error)
+            res.status(500).send('Ошибка при отправке документа')
+        }
+    }
+
+    async goToNextState(req, res) {
+        try {
+            const { requestID } = req.body
+
+            let nextRequestStep
+
+            const getRequestStep = await db.query(`Select step_id As id From document_groups
+                                                    Where primary_form_id = $1::Integer`, {
+                bind: [requestID],
+                type: QueryTypes.SELECT
+            })
+
+            nextRequestStep = getRequestStep[0].id + 1
+
+            let query
+            switch (nextRequestStep) {
+                case 4:
+                    query = `Update document_groups
+                            Set group_status_id = 5, step_id = $2
+                            Where primary_form_id=$1::Integer`
+                    break
+                default:
+                    query = `Update document_groups
+                            Set step_id = $2
+                            Where primary_form_id = $1::Integer`
+            }
+            const response = await db.query(query, {
+                bind: [requestID, nextRequestStep],
+                type: QueryTypes.UPDATE
+            })
+
+            return res.json({ response, success: true })
+
+
+
+        } catch (error) {
+            console.error('Ошибка при изменении статуса документов:', error)
+            res.status(500).send('Ошибка при изменении статуса документов')
+        }
+    }
+
+    async goToRejectState(req, res) {
+        try {
+            const { requestID } = req.body
+
+            const response = await db.query(`Update document_groups
+                                            Set group_status_id=6, step_id=$2
+                                            Where primary_form_id=$1::Integer`, {
+                bind: [requestID, null],
+                type: QueryTypes.UPDATE
+            })
+
+            return res.json({ response, success: true })
+
+
+
+        } catch (error) {
+            console.error('Ошибка при отправке документа:', error)
+            res.status(500).send('Ошибка при отправке документа')
         }
     }
 }
 
-module.exports = new DocumentController();
+module.exports = new DocumentController()

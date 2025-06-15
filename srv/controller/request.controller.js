@@ -1,8 +1,14 @@
-const { QueryTypes } = require('sequelize');
-const db = require('../db.js');
+const { QueryTypes } = require('sequelize')
+const db = require('../db.js')
 
 class RequestController {
+    constructor() {
+        this.sendRequest = this.sendRequest.bind(this)
+        this.getUserRequests = this.getUserRequests.bind(this)
+        this.getRequestDocuments = this.getRequestDocuments.bind(this)
+    }
     async sendRequest(req, res) {
+        const transaction = await db.transaction()
         try {
             const {
                 ksu_department_id,
@@ -21,322 +27,320 @@ class RequestController {
                 aspects,
                 teachers,
                 modules
-            } = req.body;
-            console.log(req.body)
+            } = req.body
 
-            // Получаем ID подразделения
-            const getDepartmentID = await db.query(
-                `Select id From ksu_departments Where Trim(name) = $1`,
-                {
-                    bind: [ksu_department_id],
-                    type: QueryTypes.SELECT
-                }
-            );
-            const ksuDepartment = getDepartmentID[0]?.id;
+            // 1. Получаем ID справочных данных
+            const [
+                { id: ksuDepartment },
+                { id: typeGradDoc },
+                { id: programType },
+                { id: lessonSheduleId }
+            ] = await Promise.all([
+                this._getOrCreateReferenceId('ksu_departments', ksu_department_id, 'name', transaction),
+                this._getOrCreateReferenceId('type_grad_docs', type_graduation_doc_id, 'name', transaction),
+                this._getOrCreateReferenceId('program_types', program_type_id, 'name', transaction),
+                this._getOrCreateReferenceId('lesson_shedules', lesson_shedule, 'name', transaction)
+            ])
 
-            // Получаем ID типа документа
-            const getGradDocID = await db.query(
-                `Select id From type_grad_docs Where Trim(name) = $1`,
-                {
-                    bind: [type_graduation_doc_id],
-                    type: QueryTypes.SELECT
-                }
-            );
-            const typeGradDoc = getGradDocID[0]?.id;
+            // 2. Обработка координатора
+            const programCoordinator = await this._handleCoordinator(coordinator, account_id, transaction)
 
-            // Получаем ID типа программы
-            const getProgramTypeID = await db.query(
-                `Select id From program_types Where Trim(name) = $1`,
-                {
-                    bind: [program_type_id],
-                    type: QueryTypes.SELECT
-                }
-            );
+            // 3. Создание основной формы
+            const primaryFormID = await this._createPrimaryForm({
+                ksuDepartment, typeGradDoc, programCoordinator,
+                programType, lessonSheduleId, account_id,
+                study_period, program_name, program_description_short,
+                program_description, target_audience, program_hours,
+                education_cost
+            }, transaction)
 
-            const programType = getProgramTypeID[0]?.id;
+            // 4. Параллельная обработка аспектов, преподавателей и модулей
+            await Promise.all([
+                this._processAspects(aspects, primaryFormID, transaction),
+                this._processTeachers(teachers, primaryFormID, transaction),
+                this._processModules(modules, primaryFormID, transaction)
+            ])
 
-            console.log('program_name: ', program_type_id)
-            console.log('program_id: ', programType)
+            // 5. Создание группы документов
+            await this._createDocumentGroup(primaryFormID, transaction)
 
-            // Получаем ID режима занятий
-            const getLessonSheduleID = await db.query(
-                `Select id From lesson_shedules Where Trim(name) = $1`,
-                {
-                    bind: [lesson_shedule],
-                    type: QueryTypes.SELECT
-                }
-            );
-            const lessonSheduleId = getLessonSheduleID[0]?.id;
-
-            // Получаем или создаем координатора
-            let programCoordinator;
-            const coordinatorFullName = coordinator?.f_name
-                ? `${coordinator.f_name} ${coordinator.m_name} ${coordinator.l_name}`
-                : null;
-
-            if (coordinatorFullName) {
-                const checkCoordinator = await db.query(
-                    `Select id From program_coordinators Where Trim(full_name) = $1`,
-                    {
-                        bind: [coordinatorFullName],
-                        type: QueryTypes.SELECT
-                    }
-                );
-
-                if (checkCoordinator.length === 0) {
-                    const insertCoordinator = await db.query(
-                        `Insert Into program_coordinators (full_name, phone, e_mail, address)
-                         Values (?, ?, ?, ?) Returning id`,
-                        {
-                            replacements: [
-                                coordinatorFullName,
-                                coordinator.phone || '',
-                                coordinator.email || '',
-                                coordinator.address || ''
-                            ],
-                        }
-                    );
-                    programCoordinator = insertCoordinator[0][0].id;
-                } else {
-                    programCoordinator = checkCoordinator[0].id;
-                }
-            } else {
-
-                // Если координатор не указан — координатором становится пользователь (по account_id)
-                const userInfo = await db.query(
-                    `Select full_name, phone, email From accounts Where id = $1`,
-                    {
-                        bind: [account_id],
-                        type: QueryTypes.SELECT
-                    }
-                );
-                const user = userInfo[0];
-                const checkCoordinator = await db.query(
-                    `Select id From program_coordinators Where Trim(full_name) = $1`,
-                    {
-                        bind: [user.full_name],
-                        type: QueryTypes.SELECT
-                    }
-                );
-                if (checkCoordinator.length === 0) {
-                    const insertCoordinator = await db.query(
-                        `Insert Into program_coordinators (full_name, phone, e_mail)
-                     Values (?, ?, ?) Returning id`,
-                        {
-                            replacements: [
-                                user.full_name,
-                                user.phone || '',
-                                user.email || '',
-                            ],
-                        }
-                    );
-                    programCoordinator = insertCoordinator[0][0].id;
-                } else {
-                    programCoordinator = checkCoordinator[0].id
-                }
-            }
-
-            // Вставляем основную форму
-
-            console.log(program_hours)
-
-            const insertForm = await db.query(
-                `Insert Into primary_forms (
-                    ksu_department_id, type_graduation_doc_id, program_coordinator_id,
-                    program_type_id, lesson_shedule_id, account_id,
-                    study_period, program_name, program_description_short,
-                    program_description, target_audience, program_hours,
-                    education_cost, created
-                )
-                Values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-                Returning id`,
-                {
-                    replacements: [
-                        ksuDepartment, typeGradDoc, programCoordinator,
-                        programType, lessonSheduleId, account_id,
-                        study_period, program_name, program_description_short,
-                        program_description, target_audience, program_hours,
-                        education_cost
-                    ],
-                }
-            );
-            const primaryFormID = insertForm[0][0].id;
-
-            // Сохраняем аспекты
-            for (let aspect of aspects) {
-                const checkAspect = await db.query(
-                    `Select id From aspects Where Trim(name) = $1 And Trim(type) = $2`,
-                    {
-                        bind: [aspect.name, aspect.type],
-                        type: QueryTypes.SELECT
-                    }
-                );
-                let aspectID;
-                if (checkAspect.length === 0) {
-                    const insertAspect = await db.query(
-                        `Insert Into aspects (name, type) Values (?, ?) Returning id`,
-                        {
-                            replacements: [aspect.name, aspect.type],
-                        }
-                    );
-                    aspectID = insertAspect[0][0].id;
-                } else {
-                    aspectID = checkAspect[0].id;
-                }
-
-                await db.query(
-                    `Insert Into form_aspects (primary_form_id, aspect_id) Values (?, ?)`,
-                    {
-                        replacements: [primaryFormID, aspectID],
-                    }
-                );
-            }
-
-            // Сохраняем преподавателей
-            for (let teacher of teachers) {
-                const checkTeacher = await db.query(
-                    `Select id From teachers Where Trim(full_name) = $1`,
-                    {
-                        bind: [teacher.full_name],
-                        type: QueryTypes.SELECT
-                    }
-                );
-                let teacherID;
-                if (checkTeacher.length === 0) {
-                    let teacherPositionID
-                    const checkPosition = await db.query(
-                        `Select id from positions
-                        Where name = $1`,
-                        {
-                            bind: [teacher.position],
-                            type: QueryTypes.SELECT
-                        }
-                    )
-                    if (checkPosition.length === 0) {
-                        const insertPosition = await db.query(
-                            `Insert Into positions (name) 
-                            Values (?) Returning id`,
-                            {
-                                replacements: [teacher.position]
-                            }
-                        )
-                        teacherPositionID = insertPosition[0][0].id
-                    } else {
-                        teacherPositionID = checkPosition[0].id
-                    }
-
-                    let teacherWorkplaceID
-                    const checkWorkplace = await db.query(
-                        `Select id from workplaces
-                        Where name = $1`,
-                        {
-                            bind: [teacher.workplace],
-                            type: QueryTypes.SELECT
-                        }
-                    )
-                    if (checkWorkplace.length === 0) {
-                        const insertWorkplace = await db.query(
-                            `Insert Into workplaces (name) 
-                            Values (?) Returning id`,
-                            {
-                                replacements: [teacher.workplace]
-                            }
-                        )
-                        teacherWorkplaceID = insertWorkplace[0][0].id
-                    } else {
-                        teacherWorkplaceID = checkWorkplace[0].id
-                    }
-
-                    const insertTeacher = await db.query(
-                        `Insert Into teachers (full_name, exp_total, workplace_id, position_id)
-                         Values (?, ?, ?, ?) Returning id`,
-                        {
-                            replacements: [
-                                teacher.full_name,
-                                teacher.exp_total,
-                                teacherWorkplaceID,
-                                teacherPositionID,
-                            ],
-                        }
-                    );
-                    teacherID = insertTeacher[0][0].id;
-                } else {
-                    teacherID = checkTeacher[0].id;
-                }
-
-                if (!primaryFormID || !teacherID) {
-                    throw new Error('Один из параметров пуст: primaryFormID или teacherID')
-                }
-
-                await db.query(
-                    `Insert Into form_teachers (primary_form_id, teacher_id) Values (?, ?)`,
-                    {
-                        replacements: [primaryFormID, teacherID]
-                    }
-                );
-            }
-
-            // Сохраняем модули
-            for (let module of modules) {
-                const checkModule = await db.query(
-                    `Select id From program_modules 
-                    Where Trim(name) = $1 And h_overall = $2::Integer`,
-                    {
-                        bind: [module.name, module.h_overall],
-                        type: QueryTypes.SELECT
-                    }
-                );
-                let moduleID;
-                if (checkModule.length === 0) {
-                    const insertModule = await db.query(
-                        `Insert Into program_modules (name, h_overall)
-                         Values (?, ?::Integer) Returning id`,
-                        {
-                            replacements: [module.name, module.h_overall],
-                        }
-                    );
-                    moduleID = insertModule[0][0].id;
-                } else {
-                    moduleID = checkModule[0].id;
-                }
-
-                await db.query(
-                    `Insert Into form_program_modules (primary_form_id, program_module_id) Values (?, ?)`,
-                    {
-                        replacements: [primaryFormID, moduleID],
-                    }
-                );
-
-                // Подготавливаем группу для документов заявки
-                const checkGroup = await db.query(
-                    `Select * From document_groups 
-                    Where primary_form_id = $1::Integer`,
-                    {
-                        bind: [primaryFormID],
-                        type: QueryTypes.SELECT
-                    }
-                )
-                if (checkGroup.length === 0)
-                    await db.query(
-                        `Insert Into document_groups (group_status_id, primary_form_id) Values (?, ?)`,
-                        {
-                            replacements: [2, primaryFormID],
-                        }
-                    )
-            }
-
-            return res.status(200).json({ message: 'Заявка успешно отправлена!' });
+            await transaction.commit()
+            return res.status(200).json({ message: 'Заявка успешно отправлена!' })
         } catch (error) {
-            console.error(error);
-            return res.status(500).json({ message: 'Ошибка при отправке заявки' });
+            await transaction.rollback()
+            console.error('Ошибка при отправке заявки:', error)
+            return res.status(500).json({
+                message: 'Ошибка при отправке заявки',
+                error: process.env.NODE_ENV === 'development' ? error.message : undefined
+            })
         }
     }
+
+    // Вспомогательные методы:
+
+    async _getOrCreateReferenceId(table, value, field, transaction) {
+        const result = await db.query(
+            `Select id From ${table} 
+            Where Trim(${field}) = $1 
+            Limit 1`, {
+            bind: [value],
+            type: QueryTypes.SELECT,
+            transaction
+        })
+
+        if (result.length) return result[0]
+
+        const insertResult = await db.query(
+            `Insert Into ${table} (${field}) 
+            Values ($1) Returning id`, {
+            bind: [value],
+            type: QueryTypes.INSERT,
+            transaction
+        })
+
+        return { id: insertResult[0][0].id }
+    }
+
+    async _handleCoordinator(coordinator, account_id, transaction) {
+        let coordinatorFullName
+        if (coordinator?.f_name) {
+            coordinatorFullName = `${coordinator.f_name} ${coordinator.m_name} ${coordinator.l_name}`
+        } else {
+            const user = await db.query(
+                `Select full_name From accounts 
+                Where id = $1 
+                Limit 1`, {
+                bind: [account_id],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+            coordinatorFullName = user[0]?.full_name
+        }
+
+        const existingCoordinator = await db.query(
+            `Select id From program_coordinators 
+            Where Trim(full_name) = $1 
+            Limit 1`, {
+            bind: [coordinatorFullName],
+            type: QueryTypes.SELECT,
+            transaction
+        })
+
+        if (existingCoordinator.length) return existingCoordinator[0].id
+
+        const newCoordinator = await db.query(
+            `Insert Into program_coordinators (full_name, phone, e_mail, address) 
+            Values ($1, $2, $3, $4) Returning id`, {
+            bind: [
+                coordinatorFullName,
+                coordinator?.phone || '',
+                coordinator?.email || '',
+                coordinator?.address || ''
+            ],
+            type: QueryTypes.INSERT,
+            transaction
+        })
+
+        return newCoordinator[0][0].id
+    }
+
+    async _createPrimaryForm(data, transaction) {
+        const result = await db.query(
+            `Insert Into primary_forms (
+                ksu_department_id, type_graduation_doc_id, program_coordinator_id,
+                program_type_id, lesson_shedule_id, account_id,
+                study_period, program_name, program_description_short,
+                program_description, target_audience, program_hours,
+                education_cost, created
+            ) Values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, NOW())
+            Returning id`, {
+            bind: [
+                data.ksuDepartment, data.typeGradDoc, data.programCoordinator,
+                data.programType, data.lessonSheduleId, data.account_id,
+                data.study_period, data.program_name, data.program_description_short,
+                data.program_description, data.target_audience, data.program_hours,
+                data.education_cost
+            ],
+            type: QueryTypes.INSERT,
+            transaction
+        })
+
+        return result[0][0].id
+    }
+
+    async _processAspects(aspects, primaryFormID, transaction) {
+        return Promise.all(aspects.map(async aspect => {
+            // 1. Находим или создаем аспект
+            const existingAspect = await db.query(
+                `SELECT id FROM aspects 
+             WHERE TRIM(name) = $1 AND TRIM(type) = $2 
+             LIMIT 1`, {
+                bind: [aspect.name, aspect.type],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            const aspectId = existingAspect.length
+                ? existingAspect[0].id
+                : (await db.query(
+                    `Insert Into aspects (name, type) 
+                    Values ($1, $2) Returning id`, {
+                    bind: [aspect.name, aspect.type],
+                    type: QueryTypes.INSERT,
+                    transaction
+                }))[0][0].id
+
+            // 2. Проверяем, существует ли уже связь
+            const existingRelation = await db.query(
+                `Select 1 From form_aspects 
+                Where primary_form_id = $1 And aspect_id = $2 
+                Limit 1`, {
+                bind: [primaryFormID, aspectId],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            // 3. Если связи нет - создаем
+            if (!existingRelation.length) {
+                await db.query(
+                    `Insert Into form_aspects (primary_form_id, aspect_id) 
+                    Values ($1, $2)`, {
+                    bind: [primaryFormID, aspectId],
+                    type: QueryTypes.INSERT,
+                    transaction
+                })
+            } else {
+                console.log(`Связь между формой ${primaryFormID} и аспектом ${aspectId} уже существует`)
+            }
+        }))
+    }
+
+    async _processTeachers(teachers, primaryFormID, transaction) {
+        return Promise.all(teachers.map(async teacher => {
+            const existingTeacher = await db.query(
+                `Select id From teachers 
+                Where Trim(full_name) = $1 
+                Limit 1`, {
+                bind: [teacher.full_name],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            let teacherId
+            if (existingTeacher.length) {
+                teacherId = existingTeacher[0].id
+            } else {
+                const [positionId, workplaceId] = await Promise.all([
+                    this._getOrCreateReferenceId('positions', teacher.position, 'name', transaction),
+                    this._getOrCreateReferenceId('workplaces', teacher.workplace, 'name', transaction)
+                ])
+
+                const newTeacher = await db.query(
+                    `Insert Into teachers (full_name, exp_total, workplace_id, position_id) 
+                    Values ($1, $2, $3, $4) Returning id`, {
+                    bind: [
+                        teacher.full_name,
+                        teacher.exp_total,
+                        workplaceId.id,
+                        positionId.id
+                    ],
+                    type: QueryTypes.INSERT,
+                    transaction
+                })
+
+                teacherId = newTeacher[0][0].id
+            }
+
+            // Проверяем существование связи перед вставкой
+            const existingRelation = await db.query(
+                `Select 1 From form_teachers 
+                 Where primary_form_id = $1 AND teacher_id = $2 
+                 Limit 1`, {
+                bind: [primaryFormID, teacherId],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            if (!existingRelation.length) {
+                await db.query(
+                    `Insert Into form_teachers (primary_form_id, teacher_id) 
+                     Values ($1, $2)`, {
+                    bind: [primaryFormID, teacherId],
+                    type: QueryTypes.INSERT,
+                    transaction
+                })
+            }
+        }))
+    }
+
+    async _processModules(modules, primaryFormID, transaction) {
+        return Promise.all(modules.map(async module => {
+            const existingModule = await db.query(
+                `Select id From program_modules 
+                Where Trim(name) = $1 And h_overall = $2 
+                Limit 1`, {
+                bind: [module.name, module.h_overall],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            const moduleId = existingModule.length
+                ? existingModule[0].id
+                : (await db.query(
+                    `Insert Into program_modules (name, h_overall) 
+                    Values ($1, $2) Returning id`, {
+                    bind: [module.name, module.h_overall],
+                    type: QueryTypes.INSERT,
+                    transaction
+                }))[0][0].id
+
+            // Проверяем существование связи перед вставкой
+            const existingRelation = await db.query(
+                `Select 1 From form_program_modules 
+                 Where primary_form_id = $1 And program_module_id = $2 
+                 Limit 1`, {
+                bind: [primaryFormID, moduleId],
+                type: QueryTypes.SELECT,
+                transaction
+            })
+
+            if (!existingRelation.length) {
+                await db.query(
+                    `Insert Into form_program_modules (primary_form_id, program_module_id) 
+                     Values ($1, $2)`, {
+                    bind: [primaryFormID, moduleId],
+                    type: QueryTypes.INSERT,
+                    transaction
+                })
+            }
+        }))
+    }
+
+    async _createDocumentGroup(primaryFormID, transaction) {
+        const existingGroup = await db.query(
+            `Select id From document_groups 
+            Where primary_form_id = $1 
+            Limit 1`, {
+            bind: [primaryFormID],
+            type: QueryTypes.SELECT,
+            transaction
+        })
+
+        if (!existingGroup.length) {
+            await db.query(
+                `Insert Into document_groups (group_status_id, primary_form_id) 
+                Values (2, $1)`, {
+                bind: [primaryFormID],
+                type: QueryTypes.INSERT,
+                transaction
+            })
+        }
+    }
+
     async getUserRequests(req, res) {
         try {
             const { account_id } = req.body
-            console.log(account_id)
 
-            let userRoleID
             const getUserRoleID = await db.query(
                 `Select role_id From accounts
                 Where id = $1::Integer`, {
@@ -344,41 +348,85 @@ class RequestController {
                 type: QueryTypes.SELECT
             })
 
-            if (getUserRoleID !== 0)
-                userRoleID = getUserRoleID[0].role_id
-
-
-            console.log("USER_ID: ", account_id)
-            console.log("USER_ROLE_ID: ", userRoleID)
-
-            if (userRoleID === 3) {
-                const userRequests = await db.query(
-                    `Select primary_forms.id, primary_forms.program_name as program_name, primary_forms.created as date, group_statuses.name as status_name From primary_forms
-                    Inner Join document_groups On document_groups.primary_form_id = primary_forms.id
-                    Inner Join group_statuses On group_statuses.id = document_groups.group_status_id
-                    Inner Join request_steps On request_steps.id = document_groups.step_id
-                    Where request_steps.id = 1
-                    Group by primary_forms.id, group_statuses.name`, {
-                    type: QueryTypes.SELECT
-                })
-
-                return res.json({ userrequests: userRequests })
+            if (!getUserRoleID.length) {
+                return res.status(404).json({ message: "Пользователь не найден" })
             }
 
+            const userRoleID = getUserRoleID[0].role_id
+            let query
+            let params = []
 
-            const userRequests = await db.query(
-                `Select primary_forms.id, primary_forms.program_name as program_name, primary_forms.created as date, group_statuses.name as status_name From primary_forms
-                Inner Join document_groups On document_groups.primary_form_id = primary_forms.id
-                Inner Join group_statuses On group_statuses.id = document_groups.group_status_id 
-                Where account_id = $1::Integer
-                Group by primary_forms.id, group_statuses.name`, {
-                bind: [account_id],
+            switch (userRoleID) {
+                case 2:
+                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                            gs.name As status_name, pf.program_description_short As description 
+                            From primary_forms pf
+                            Inner Join document_groups dg On dg.primary_form_id = pf.id
+                            Inner Join group_statuses gs On gs.id = dg.group_status_id 
+                            Where pf.account_id = $1::Integer
+                            Group By pf.id, gs.name`
+                    params = [account_id]
+                    break
+
+                case 3:
+                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                            gs.name As status_name, pf.program_description_short As description 
+                            From primary_forms pf
+                            Inner Join document_groups dg On dg.primary_form_id = pf.id
+                            Inner Join group_statuses gs On gs.id = dg.group_status_id
+                            Inner Join request_steps rs On rs.id = dg.step_id
+                            Where rs.id = 1
+                            Group By pf.id, gs.name`
+                    break
+
+                case 4:
+                    const getDepartment = await db.query(
+                        `Select ksu_department_id From accounts
+                        Where id = $1::Integer`, {
+                        bind: [account_id],
+                        type: QueryTypes.SELECT
+                    })
+
+                    if (!getDepartment.length || !getDepartment[0].ksu_department_id) {
+                        return res.json({ userrequests: [] })
+                    }
+
+                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                            gs.name As status_name, pf.program_description_short As description 
+                            From primary_forms pf
+                            Inner Join document_groups dg On dg.primary_form_id = pf.id
+                            Inner Join group_statuses gs On gs.id = dg.group_status_id
+                            Inner Join request_steps rs On rs.id = dg.step_id
+                            Where rs.id = 2 And pf.ksu_department_id = $1::Integer
+                            Group By pf.id, gs.name`
+                    params = [getDepartment[0].ksu_department_id]
+                    break
+
+                case 5:
+                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                            gs.name As status_name, pf.program_description_short As description 
+                            From primary_forms pf
+                            Inner Join document_groups dg On dg.primary_form_id = pf.id
+                            Inner Join group_statuses gs On gs.id = dg.group_status_id
+                            Inner Join request_steps rs On rs.id = dg.step_id
+                            Where rs.id = 3
+                            Group By pf.id, gs.name`
+                    break
+
+                default:
+                    return res.json({ userrequests: [] })
+            }
+
+            const userRequests = await db.query(query, {
+                bind: params,
                 type: QueryTypes.SELECT
             })
 
             return res.json({ userrequests: userRequests })
+
         } catch (error) {
-            console.log(error)
+            console.error('Ошибка при получении заявок:', error)
+            return res.status(500).json({ message: 'Внутренняя ошибка сервера' })
         }
     }
 
@@ -395,9 +443,9 @@ class RequestController {
             return res.json({ requestdocuments: requestDocuments })
 
         } catch (error) {
-            console.log(error)
+            console.error('Ошибка при документов заявки: ', error)
         }
     }
 }
 
-module.exports = new RequestController();
+module.exports = new RequestController()

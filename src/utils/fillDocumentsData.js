@@ -1,5 +1,5 @@
-import { getPrimaryFormData, getFormAspects, getFormModules } from '../http/dataAPI';
-import { getDocumentsData } from '../http/documentAPI';
+import { getPrimaryFormData, getFormAspects, getFormModules } from '../http/dataAPI'
+import { getDocumentsData } from '../http/documentAPI'
 
 const serverToDocumentMap = {
     grad_doc_name: ['annotation.program.graduation_doc'],
@@ -10,21 +10,21 @@ const serverToDocumentMap = {
     target_audience: ['commonData.program.listeners_category'],
     aspects: ['commonData.aspects'],
     modules: ['commonData.modules'],
-};
+}
 
 // Вспомогательная функция для установки значения по пути
 const setByPath = (obj, path, value) => {
-    const keys = path.split('.');
-    const lastKey = keys.pop();
+    const keys = path.split('.')
+    const lastKey = keys.pop()
     const nested = keys.reduce((acc, key) => {
-        if (!acc[key]) acc[key] = {};
-        return acc[key];
-    }, obj);
-    nested[lastKey] = value;
-};
+        if (!acc[key]) acc[key] = {}
+        return acc[key]
+    }, obj)
+    nested[lastKey] = value
+}
 
 export const fillDocuments = async (requestID, setDocumentsData) => {
-    if (!requestID) return;
+    if (!requestID) return
 
     try {
         // Получаем все необходимые данные
@@ -38,11 +38,11 @@ export const fillDocuments = async (requestID, setDocumentsData) => {
             getDocumentsData(requestID),
             getFormAspects(requestID),
             getFormModules(requestID)
-        ]);
+        ])
 
         // Получаем данные документов из ответа сервера
-        const serverDocumentsData = documentsResponse?.data[0]?.data;
-        console.log('Данные с сервера:', serverDocumentsData);
+        const serverDocumentsData = documentsResponse?.data[0]?.data
+        console.log('Данные с сервера:', serverDocumentsData)
 
         // Создаем базовую структуру с дефолтными значениями
         const defaultData = {
@@ -85,7 +85,7 @@ export const fillDocuments = async (requestID, setDocumentsData) => {
             ETP: false,
             EEP: false,
             IAS: false
-        };
+        }
 
         // Объединяем данные с сервера с дефолтной структурой
         const mergedData = {
@@ -125,15 +125,15 @@ export const fillDocuments = async (requestID, setDocumentsData) => {
             ETP: serverDocumentsData?.ETP || false,
             EEP: serverDocumentsData?.EEP || false,
             IAS: serverDocumentsData?.IAS || false
-        };
+        }
 
         // Обновляем состояние
-        setDocumentsData(mergedData);
-        console.log('Объединенные данные:', mergedData);
+        setDocumentsData(mergedData)
+        console.log('Объединенные данные:', mergedData)
 
     } catch (error) {
-        console.error('Ошибка при заполнении документов:', error);
+        console.error('Ошибка при заполнении документов:', error)
         // Можно добавить обработку ошибок, например:
-        // setErrorState('Не удалось загрузить данные документов');
+        // setErrorState('Не удалось загрузить данные документов')
     }
-};
+}

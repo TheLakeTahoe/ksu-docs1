@@ -1,7 +1,7 @@
-import { Container } from "react-bootstrap";
-import CustomNavbar from "../components/CustomComponents/Other/Navbar";
-import MainContent from "../components/MainContent/MainContent";
-import { useAuth } from "../context/AuthContext";
+import { Container } from "react-bootstrap"
+import CustomNavbar from "../components/CustomComponents/Other/Navbar"
+import MainContent from "../components/MainContent/MainContent"
+import { useAuth } from "../context/AuthContext"
 
 function MainPage() {
 
@@ -14,7 +14,7 @@ function MainPage() {
                 <MainContent />
             </Container>
         </Container>
-    );
+    )
 }
 
-export default MainPage;
+export default MainPage

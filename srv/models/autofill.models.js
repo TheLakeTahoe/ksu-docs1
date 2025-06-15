@@ -1,4 +1,4 @@
-const { userRole, typeGraduationDoc, ksuDepartment, programType, education, groupStatus, requestStep, lessonShedule } = require('./models');
+const { userRole, typeGraduationDoc, ksuDepartment, programType, education, groupStatus, requestStep, lessonShedule } = require('./models')
 
 
 // Функция для заполнения справочных таблиц
@@ -13,7 +13,7 @@ async function fillDatabase() {
             { name: 'Проректор по ОД'}
         ], {
             ignoreDuplicates: true, // Игнорирование дубликатов
-        });
+        })
 
         // Заполнение таблицы type_grad_doc
         await typeGraduationDoc.bulkCreate([
@@ -22,7 +22,7 @@ async function fillDatabase() {
             { name: 'Удостоверение повышения квалификации' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы ksu_department
         await ksuDepartment.bulkCreate([
@@ -39,7 +39,7 @@ async function fillDatabase() {
             { name: 'Отдел по развитию и адаптации персонала' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы program_type
         await programType.bulkCreate([
@@ -48,7 +48,7 @@ async function fillDatabase() {
             { name: 'Дополнительная общеобразовательная программа для взрослых' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы education
         await education.bulkCreate([
@@ -62,7 +62,7 @@ async function fillDatabase() {
             { name: 'Докторантура' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы group_status
         await groupStatus.bulkCreate([
@@ -74,7 +74,7 @@ async function fillDatabase() {
             { name: 'Отказано' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы lesson_shedule
         await lessonShedule.bulkCreate([
@@ -83,21 +83,22 @@ async function fillDatabase() {
             { name: 'Заочная' },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
         // Заполнение таблицы request_step
         await requestStep.bulkCreate([
             { name: 'Проверка отделом ДОП', role_id: '3' },
             { name: 'Проверка структурным подразделением', role_id: '4'},
             { name: 'Согласование проректором', role_id: '5' },
+            { name: 'Заявка принята', role_id: null },
         ], {
             ignoreDuplicates: true,
-        });
+        })
 
-        console.log('Справочные таблицы успешно заполнены начальными данными.');
+        console.log('Справочные таблицы успешно заполнены начальными данными.')
     } catch (error) {
-        console.error('Ошибка при заполнении справочных таблиц:', error);
+        console.error('Ошибка при заполнении справочных таблиц:', error)
     }
 }
 
-fillDatabase();
+fillDatabase()

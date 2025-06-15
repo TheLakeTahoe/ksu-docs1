@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { Form, Col, Row, Button } from 'react-bootstrap'
+import { Form, Col, Row, Button, Alert } from 'react-bootstrap'
 import InputField from '../CustomComponents/InputFields/InputField'
-import { getAllEducation } from '../../http/dataAPI'
+import { getAllEducation, getDepartmentsData } from '../../http/dataAPI'
 import { register } from '../../http/userAPI'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -14,11 +14,13 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
         workExperience: '',
         workplace: '',
         education_id: '',
-        position: ''
+        position: '',
+        ksu_department: ''
     })
 
     const [errors, setErrors] = useState({})
     const [educationOptions, setEducationOptions] = useState([])
+    const [ksuDepartmentOptions, setKsuDepartmentOptions] = useState([])
     const { login } = useAuth()
 
     useEffect(() => {
@@ -31,9 +33,7 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
     }
 
     const fieldLabels = {
-        f_name: 'Фамилия',
-        m_name: 'Имя',
-        l_name: 'Отчество',
+        full_name: 'ФИО',
         workExperience: 'Опыт работы (лет)',
         workplace: 'Место работы',
         education_id: 'Образование',
@@ -54,17 +54,29 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
                 console.error('Ошибка при получении данных об образовании:', error)
             }
         }
+        const fetchDepartmentsData = async () => {
+            try {
+                const response = await getDepartmentsData()
+                const departmentsData = response.data.map(item => ({
+                    value: item.name,
+                    label: item.name,
+                    id: item.id
+                }))
+                setKsuDepartmentOptions(departmentsData)
+            } catch (error) {
+                console.error('Ошибка при получении данных о структурных подразделениях:', error)
+            }
+        }
 
         fetchEducationData()
+        fetchDepartmentsData()
     }, []) // Пустой массив зависимостей
 
     const validateForm = (values) => {
         const newErrors = {}
-        const { f_name, m_name, l_name, workExperience, workplace, education_id, position } = values
+        const { full_name, workExperience, workplace, education_id, position } = values
 
-        if (!f_name) newErrors.f_name = 'Поле не должно быть пустым'
-        if (!m_name) newErrors.m_name = 'Поле не должно быть пустым'
-        if (!l_name) newErrors.l_name = 'Поле не должно быть пустым'
+        if (!full_name) newErrors.full_name = 'Поле не должно быть пустым'
         if (!workExperience) newErrors.workExperience = 'Поле не должно быть пустым'
         if (!workplace) newErrors.workplace = 'Поле не должно быть пустым'
         if (!education_id) newErrors.education_id = 'Поле не должно быть пустым'
@@ -73,11 +85,11 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
         return newErrors
     }
 
-    const handleKeyPress = (e) => {
-        if (e.key === ' ') {
-            e.preventDefault()
-        }
-    }
+    // const handleKeyPress = (e) => {
+    //     if (e.key === ' ') {
+    //         e.preventDefault()
+    //     }
+    // }
 
     const handleSubmit = (e) => {
         e.preventDefault()
@@ -93,7 +105,6 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
 
     const handleChange = (e) => {
         if (e && e.value) {
-            console.log(e)
             setFormValues({ ...formValues, [e.name]: e.value })
             updateFormData({ [e.name]: e.id })
         } else {
@@ -108,14 +119,13 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
                 <div className='form-title'>Персональные данные</div>
             </Row>
 
-            {['f_name', 'm_name', 'l_name'].map((field, idx) => (
+            {['full_name'].map((field, idx) => (
                 <InputField
                     key={idx}
                     label={fieldLabels[field]}
                     type='text'
                     value={formValues[field]}
                     onChange={handleChange}
-                    onKeyPress={handleKeyPress}
                     name={field}
                     error={errors[field]}
                 />
@@ -142,6 +152,16 @@ const PersonalDataForm = ({ onBack, formData, updateFormData, updateHeight }) =>
                     error={errors[field]}
                 />
             ))}
+
+            <Alert variant='info'>Данное поле необходимо для заполнения только для проверяющего структурного подразделения</Alert>
+            <InputField
+                label='Структурное подразделение КГУ'
+                type='text'
+                value={ksuDepartmentOptions.find(option => option.value === formValues.ksu_department)}
+                onChange={(selected) => handleChange({ name: 'ksu_department', ...selected })}
+                options={ksuDepartmentOptions}
+                isSelect
+            />
 
             <Row className='form-buttons'>
                 <Col xs={6}>

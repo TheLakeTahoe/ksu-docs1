@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Container, Card, Col, Button, Nav, Tab, Row } from 'react-bootstrap';
-import InputField from '../CustomComponents/InputFields/InputField';
-import { getUserData } from '../../http/userAPI';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from 'react'
+import { Container, Card, Col, Button, Nav, Tab, Row } from 'react-bootstrap'
+import InputField from '../CustomComponents/InputFields/InputField'
+import { getUserData } from '../../http/userAPI'
+import { useAuth } from '../../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 const SettingsForm = ({ userData }) => {
   const [formData, setFormData] = useState({
@@ -20,7 +20,7 @@ const SettingsForm = ({ userData }) => {
     newEmail: '',
     newPhone: '',
     created: '',
-  });
+  })
 
   const { logout } = useAuth()
   const navigate = useNavigate()
@@ -54,8 +54,8 @@ const SettingsForm = ({ userData }) => {
   }
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+    setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
 
   return (
     <Container as={Col} md={9} lg={7} className="mt-4">
@@ -136,7 +136,7 @@ const SettingsForm = ({ userData }) => {
         </Tab.Content>
       </Tab.Container>
     </Container>
-  );
-};
+  )
+}
 
-export default SettingsForm;
+export default SettingsForm

@@ -207,10 +207,10 @@ const PrimaryForm = ({ userID }) => {
         if (!formValues.ksu_department_id) errors.ksu_department_id = 'Выберите структурное подразделение'
         if (!formValues.type_graduation_doc_id) errors.type_graduation_doc_id = 'Выберите документ по окончании'
         modules.forEach((module, index) => {
-            const currentModuleErrors = [];
+            const currentModuleErrors = []
 
             if (!module.name?.trim()) {
-                currentModuleErrors.push("Не указано название модуля");
+                currentModuleErrors.push("Не указано название модуля")
             }
 
             // Приводим к единой структуре
@@ -218,59 +218,59 @@ const PrimaryForm = ({ userID }) => {
                 moduleErrors[index] = {
                     module: currentModuleErrors,
                     submodules: {} // даже если нет подмодулей — для универсального отображения
-                };
+                }
             }
-        });
+        })
 
         if (modules.length < 1)
             moduleErrors.count = ['Добавьте хотя бы один модуль']
 
         const requiredTypes = ['know', 'can', 'own']
-        const typeCounters = { know: 0, can: 0, own: 0 };
-        const typeTranslations = { know: 'Знать', can: 'Уметь', own: 'Владеть' };
+        const typeCounters = { know: 0, can: 0, own: 0 }
+        const typeTranslations = { know: 'Знать', can: 'Уметь', own: 'Владеть' }
         const foundTypes = new Set()
 
         const missingNames = []
         aspects.forEach((aspect) => {
-            typeCounters[aspect.type] += 1;
-            foundTypes.add(aspect.type);
+            typeCounters[aspect.type] += 1
+            foundTypes.add(aspect.type)
 
             if (!aspect.name?.trim()) {
-                const num = typeCounters[aspect.type];
-                const typeText = typeTranslations[aspect.type] || aspect.type;
-                missingNames.push(`Аспект №${num} типа "${typeText}": Не указано наименование`);
+                const num = typeCounters[aspect.type]
+                const typeText = typeTranslations[aspect.type] || aspect.type
+                missingNames.push(`Аспект №${num} типа "${typeText}": Не указано наименование`)
             }
             if (missingNames.length > 0)
                 aspectErrors.missingNames = missingNames
-        });
+        })
 
         const types = []
         requiredTypes.forEach((type) => {
             if (!foundTypes.has(type)) {
-                const typeText = typeTranslations[type] || type;
-                types.push(`Не указан хотя бы один аспект типа "${typeText}"`);
+                const typeText = typeTranslations[type] || type
+                types.push(`Не указан хотя бы один аспект типа "${typeText}"`)
             }
             if (types.length > 0)
                 aspectErrors.type = types
-        });
+        })
 
         teachers.forEach((teacher, index) => {
-            const currentTeacherErrors = [];
+            const currentTeacherErrors = []
 
-            if (!teacher.full_name?.trim()) currentTeacherErrors.push("Не выбран Преподаватель");
+            if (!teacher.full_name?.trim()) currentTeacherErrors.push("Не выбран Преподаватель")
             else {
-                if (!teacher.exp_total?.trim()) currentTeacherErrors.push("Не указан опыт работы");
-                if (!teacher.workplace?.trim()) currentTeacherErrors.push("Не указано место работы");
-                if (!teacher.position?.trim()) currentTeacherErrors.push("Не указана должность");
+                if (!teacher.exp_total?.trim()) currentTeacherErrors.push("Не указан опыт работы")
+                if (!teacher.workplace?.trim()) currentTeacherErrors.push("Не указано место работы")
+                if (!teacher.position?.trim()) currentTeacherErrors.push("Не указана должность")
             }
 
             if (currentTeacherErrors.length > 0) {
                 teacherErrors[index] = {
                     teacher: currentTeacherErrors,
-                };
+                }
             }
 
-        });
+        })
 
         if (teachers.length < 1)
             teacherErrors.count = ['Добавьте хотя бы одного преподавателя']

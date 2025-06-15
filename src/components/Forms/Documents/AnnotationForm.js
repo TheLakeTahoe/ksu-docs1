@@ -1,24 +1,24 @@
-import { useState, useRef, useEffect } from "react";
-import { Form, Button, Container, Card, Modal, Spinner, Alert, Col } from "react-bootstrap";
-import InputField from "../../CustomComponents/InputFields/InputField";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { exportAnnotation, sendDocument } from '../../../http/documentAPI';
-import { renderAsync } from 'docx-preview';
-import AspectGroup from "../../PrimaryFormComponents/Aspect/AspectGroup";
-import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup";
-import EducationTechGroup from "../../AnnotationFormComponents/EducationTechGroup";
-import DocumentFormField from "../../CustomComponents/InputFields/DocumentFormField";
-import ReviwerTools from "../../CustomComponents/Other/ReviewerTools";
+import { useState, useRef, useEffect } from "react"
+import { Form, Button, Container, Card, Modal, Spinner, Alert, Col } from "react-bootstrap"
+import InputField from "../../CustomComponents/InputFields/InputField"
+import "bootstrap/dist/css/bootstrap.min.css"
+import { exportAnnotation, sendDocument } from '../../../http/documentAPI'
+import { renderAsync } from 'docx-preview'
+import AspectGroup from "../../PrimaryFormComponents/Aspect/AspectGroup"
+import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup"
+import EducationTechGroup from "../../AnnotationFormComponents/EducationTechGroup"
+import DocumentFormField from "../../CustomComponents/InputFields/DocumentFormField"
+import ReviwerTools from "../../CustomComponents/Other/ReviewerTools"
 
-const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
+const AnnotationForm = ({ userData, requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
 
-    const [showModal, setShowModal] = useState(false);
-    const containerRef = useRef(null);
-    const [aspects, setAspects] = useState([]);
-    const [modules, setModules] = useState([]);
-    const [technologies, setTechnologies] = useState([{ name: '' }]);
+    const [showModal, setShowModal] = useState(false)
+    const containerRef = useRef(null)
+    const [aspects, setAspects] = useState([])
+    const [modules, setModules] = useState([])
+    const [technologies, setTechnologies] = useState([{ name: '' }])
     const [benefitsAlert, setBenefitsAlert] = useState(false)
-    const [validationErrors, setValidationErrors] = useState({});
+    const [validationErrors, setValidationErrors] = useState({})
     const [technologyValidationErrors, setTechnologyValidationErrors] = useState({})
     const commonData = documentsData.commonData
     const annotationData = documentsData.annotation
@@ -43,28 +43,28 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
     console.log(validationErrors)
 
     const flattenErrors = (errors) => {
-        const result = {};
+        const result = {}
 
         Object.values(errors).forEach((section) => {
             if (section && typeof section === 'object' && !Array.isArray(section)) {
-                Object.assign(result, section); // просто добавляем поля program_name, education_form и т.д.
+                Object.assign(result, section) // просто добавляем поля program_name, education_form и т.д.
             }
-        });
+        })
 
-        return result;
-    };
+        return result
+    }
 
 
     useEffect(() => {
         if ((annotationData?.errors || commonData?.errors) && !isChecking) {
-            const annotationErrors = flattenErrors(annotationData?.errors || {});
-            const commonErrors = flattenErrors(commonData?.errors || {});
+            const annotationErrors = flattenErrors(annotationData?.errors || {})
+            const commonErrors = flattenErrors(commonData?.errors || {})
             setValidationErrors({
                 ...annotationErrors,
                 ...commonErrors,
-            });
+            })
         }
-    }, [annotationData?.errors, commonData?.errors]);
+    }, [annotationData?.errors, commonData?.errors])
 
     const sendThisDocument = async () => {
         const dataToSend = {
@@ -86,7 +86,7 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
                 ...prev.annotation,
                 technologies: newTechnologies
             }
-        }));
+        }))
         onChange()
     }
 
@@ -99,7 +99,7 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
                 ...prev.annotation,
                 technologies: newTechnologies
             }
-        }));
+        }))
         onChange()
     }
 
@@ -112,78 +112,78 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
                 ...prev.annotation,
                 technologies: newTechnologies
             }
-        }));
+        }))
         onChange()
     }
 
     const handleViewDoc = async () => {
         try {
-            const response = await exportAnnotation({ annotationData, commonData });
-            if (response.status !== 200) throw new Error("Ошибка при создании файла");
+            const response = await exportAnnotation({ annotationData, commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-            const blob = response.data;
-            setShowModal(true);
+            const blob = response.data
+            setShowModal(true)
 
             setTimeout(() => {
                 if (containerRef.current) {
-                    containerRef.current.innerHTML = "";
-                    renderAsync(blob, containerRef.current);
+                    containerRef.current.innerHTML = ""
+                    renderAsync(blob, containerRef.current)
                 }
-            }, 1000);
+            }, 1000)
         } catch (error) {
-            console.error("Ошибка просмотра документа:", error);
+            console.error("Ошибка просмотра документа:", error)
         }
-    };
+    }
 
     const handleDownload = async () => {
         try {
-            const response = await exportAnnotation({ annotationData, commonData });
-            if (response.status !== 200) throw new Error("Ошибка при создании файла");
+            const response = await exportAnnotation({ annotationData, commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-            const blob = response.data;
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `Аннотация_ДОП.docx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
+            const blob = response.data
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `Аннотация_ДОП.docx`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
         } catch (error) {
-            console.error("Ошибка скачивания файла:", error);
+            console.error("Ошибка скачивания файла:", error)
         }
-    };
+    }
 
     const handleSelectChange = (val, field) => {
         handleInputChange({ target: { value: val.value, name: field } })
     }
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value } = e.target
 
         setDocumentsData(prev => {
-            const updated = { ...prev };
+            const updated = { ...prev }
 
             const updateNestedData = (obj, path, val) => {
-                const keys = path.split('.');
-                const lastKey = keys.pop();
+                const keys = path.split('.')
+                const lastKey = keys.pop()
                 const nested = keys.reduce((acc, key) => {
-                    if (!acc[key]) acc[key] = {};
-                    return acc[key];
-                }, obj);
-                nested[lastKey] = val ?? ''; // если null — ставим ''
-            };
+                    if (!acc[key]) acc[key] = {}
+                    return acc[key]
+                }, obj)
+                nested[lastKey] = val ?? '' // если null — ставим ''
+            }
 
             // Решаем, куда писать: в commonData или в annotation
             if (
                 name.startsWith('annotation')
             ) {
-                const path = name.replace(/^annotation\./, '');
-                updateNestedData(updated.annotation, path, value);
+                const path = name.replace(/^annotation\./, '')
+                updateNestedData(updated.annotation, path, value)
             } else if (
                 name.startsWith('commonData')
             ) {
-                const path = name.replace(/^commonData\./, '');
-                updateNestedData(updated.commonData, path, value);
+                const path = name.replace(/^commonData\./, '')
+                updateNestedData(updated.commonData, path, value)
             }
 
             // Проверяем формат заполнения Benefits
@@ -201,74 +201,75 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
             // Выставляем статус "Редактируется"
             if (!isChecking)
                 onChange(name)
-            return updated;
-        });
-    };
+            return updated
+        })
+    }
 
     const validateForm = () => {
-        const errors = {};
+        const errors = {}
         const technologyErrors = {}
 
         // commonData.program
-        if (!commonData?.program?.standart_compliance) errors['standart_compliance'] = 'Поле не заполнено';
-        if (!commonData?.program?.program_goal) errors['program_goal'] = 'Поле не заполнено';
-        if (!commonData?.program?.listeners_category) errors['listeners_category'] = 'Поле не заполнено';
+        if (!commonData?.program?.standart_compliance) errors['standart_compliance'] = 'Поле не заполнено'
+        if (!commonData?.program?.program_goal) errors['program_goal'] = 'Поле не заполнено'
+        if (!commonData?.program?.listeners_category) errors['listeners_category'] = 'Поле не заполнено'
 
         // annotationData.program
-        if (!annotationData?.program?.direction) errors['direction'] = 'Поле не заполнено';
-        if (!annotationData?.program?.benefits) errors['benefits'] = 'Поле не заполнено';
-        if (!annotationData?.program?.control_form) errors['control_form'] = 'Поле не заполнено';
+        if (!annotationData?.program?.direction) errors['direction'] = 'Поле не заполнено'
+        if (!annotationData?.program?.benefits) errors['benefits'] = 'Поле не заполнено'
+        if (!annotationData?.program?.control_form) errors['control_form'] = 'Поле не заполнено'
 
         // commonData.hours
         if (!commonData?.hours?.academic) errors['academic'] = 'Поле не заполнено'
         else if (commonData.hours.academic === '0') errors['academic'] = 'Поле не заполнено'
 
         if (!commonData?.hours?.overall) errors['overall'] = 'Поле не заполнено'
-        else if (commonData.hours.overall === '0') errors['overall'] = 'Поле не заполнено';
+        else if (commonData.hours.overall === '0') errors['overall'] = 'Поле не заполнено'
 
         // commonData.lesson
-        if (!commonData?.lesson?.count) errors['lesson_count'] = 'Поле не заполнено';
-        if (!commonData?.lesson?.duration) errors['lesson_duration'] = 'Поле не заполнено';
+        if (!commonData?.lesson?.count) errors['lesson_count'] = 'Поле не заполнено'
+        if (!commonData?.lesson?.duration) errors['lesson_duration'] = 'Поле не заполнено'
 
         // annotationData.ksu
-        if (!annotationData?.ksu?.department) errors['department'] = 'Поле не заполнено';
-        if (!annotationData?.ksu?.auditory) errors['auditory'] = 'Поле не заполнено';
-        if (!annotationData?.ksu?.equipment) errors['equipment'] = 'Поле не заполнено';
+        if (!annotationData?.ksu?.department) errors['department'] = 'Поле не заполнено'
+        if (!annotationData?.ksu?.auditory) errors['auditory'] = 'Поле не заполнено'
+        if (!annotationData?.ksu?.equipment) errors['equipment'] = 'Поле не заполнено'
 
         // technologies
         if (technologies.length < 1)
             errors['technology'] = 'Должна быть заполнена хотя бы одна технология'
 
         technologies.forEach((technology, index) => {
-            const currentTechnologyErrors = [];
+            const currentTechnologyErrors = []
 
             if (!technology.name?.trim()) {
-                currentTechnologyErrors.push("Не указано название технологии");
+                currentTechnologyErrors.push("Не указано название технологии")
             }
 
             if (currentTechnologyErrors.length > 0) {
-                technologyErrors[index] = currentTechnologyErrors;
+                technologyErrors[index] = currentTechnologyErrors
             }
-        });
+        })
 
-        setValidationErrors(errors);
+        setValidationErrors(errors)
         setTechnologyValidationErrors(technologyErrors)
-        return Object.keys(errors).length === 0 && Object.keys(technologyErrors).length === 0;
-    };
+        return Object.keys(errors).length === 0 && Object.keys(technologyErrors).length === 0
+    }
 
 
     const handleSubmit = (e) => {
-        e.preventDefault();
-        if (!validateForm()) return;
+        e.preventDefault()
+        if (!validateForm()) return
         sendThisDocument()
         onSave()
-    };
+    }
 
     return (
         <Container className="mt-4">
             <Form onSubmit={handleSubmit}>
                 {isChecking && (
                     <ReviwerTools isAnnotation
+                        userData={userData}
                         dataToSend={documentsData}
                         requestID={requestID}
                     />
@@ -496,7 +497,7 @@ const AnnotationForm = ({ requestID, documentsData, setDocumentsData, onChange, 
                 </Modal.Footer>
             </Modal>
         </Container>
-    );
-};
+    )
+}
 
-export default AnnotationForm;
+export default AnnotationForm

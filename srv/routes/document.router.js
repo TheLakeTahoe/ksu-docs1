@@ -11,6 +11,8 @@ router.get('/export_information_about_staffing', documentController.exportInform
 router.post('/send_document', documentController.sendDocument)
 router.post('/send_documents_group', documentController.sendDocumentsGroup)
 router.post('/go_to_edit_state', documentController.goToEditState)
+router.post('/go_to_next_state', documentController.goToNextState)
+router.post('/go_to_reject_state', documentController.goToRejectState)
 
 
 

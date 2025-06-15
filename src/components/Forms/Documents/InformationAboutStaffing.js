@@ -7,7 +7,7 @@ import ReviwerTools from '../../CustomComponents/Other/ReviewerTools'
 
 const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersList, setTeachersList, setDocumentsData, moduleErrors }) => {
   const teachers = Array.isArray(teachersList) ? teachersList : []
-  const [modalErrors, setModalErrors] = useState({});
+  const [modalErrors, setModalErrors] = useState({})
   const contractList = [
     { value: 'Договор гражданско-правового характера', label: 'Договор гражданско-правового характера' },
     { value: '-', label: '-' }
@@ -82,31 +82,31 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
   }
 
   const validateModal = () => {
-    const errors = {};
-    const modalErrors = {};
+    const errors = {}
+    const modalErrors = {}
     if (!newTeacher?.full_name) {
-      modalErrors.full_name = 'Поле не заполнено';
+      modalErrors.full_name = 'Поле не заполнено'
     }
     if (!newTeacher?.workplace) {
-      modalErrors.workplace = 'Поле не заполнено';
+      modalErrors.workplace = 'Поле не заполнено'
     }
     if (!newTeacher?.education) {
-      modalErrors.education = 'Поле не заполнено';
+      modalErrors.education = 'Поле не заполнено'
     }
     if (!newTeacher?.degree) {
-      modalErrors.degree = 'Поле не заполнено';
+      modalErrors.degree = 'Поле не заполнено'
     }
     if (!newTeacher?.experience_total) {
-      modalErrors.experience_total = 'Поле не заполнено';
+      modalErrors.experience_total = 'Поле не заполнено'
     }
     if (!newTeacher?.experience_subject) {
-      modalErrors.experience_subject = 'Поле не заполнено';
+      modalErrors.experience_subject = 'Поле не заполнено'
     }
     if (!newTeacher?.contract) {
-      modalErrors.contract = 'Поле не заполнено';
+      modalErrors.contract = 'Поле не заполнено'
     }
     if (Object.keys(modalErrors).length > 0) {
-      Object.assign(errors, modalErrors);
+      Object.assign(errors, modalErrors)
     }
     setModalErrors(errors)
 
@@ -254,10 +254,10 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
 
 const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEditable, isChecking, onChange, requestID, onSave }) => {
 
-  const [showModal, setShowModal] = useState(false);
-  const containerRef = useRef(null);
+  const [showModal, setShowModal] = useState(false)
+  const containerRef = useRef(null)
   const [modules, setModules] = useState([])
-  const [moduleErrors, setModuleErrors] = useState({});
+  const [moduleErrors, setModuleErrors] = useState({})
   const commonData = documentsData.commonData
   const [teachersList, setTeachersList] = useState([
     { value: 'Иванов И.И., доцент', label: 'Иванов И.И., доцент', workplace: 'Работа', education: 'Среднее', degree: 'Крутой', experience_total: '2', experience_subject: '1' },
@@ -270,38 +270,38 @@ const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEdita
   }, [commonData])
 
   const validateModules = () => {
-    const errors = {};
+    const errors = {}
     modules.forEach((module, idx) => {
-      const moduleError = {};
+      const moduleError = {}
       if (!module?.teacher?.full_name) {
-        moduleError.full_name = 'Поле не заполнено';
+        moduleError.full_name = 'Поле не заполнено'
       }
       if (!module?.teacher?.workplace) {
-        moduleError.workplace = 'Поле не заполнено';
+        moduleError.workplace = 'Поле не заполнено'
       }
       if (!module?.teacher?.education) {
-        moduleError.education = 'Поле не заполнено';
+        moduleError.education = 'Поле не заполнено'
       }
       if (!module?.teacher?.degree) {
-        moduleError.degree = 'Поле не заполнено';
+        moduleError.degree = 'Поле не заполнено'
       }
       if (!module?.teacher?.experience_total) {
-        moduleError.experience_total = 'Поле не заполнено';
+        moduleError.experience_total = 'Поле не заполнено'
       }
       if (!module?.teacher?.experience_subject) {
-        moduleError.experience_subject = 'Поле не заполнено';
+        moduleError.experience_subject = 'Поле не заполнено'
       }
       if (!module?.teacher?.contract) {
-        moduleError.contract = 'Поле не заполнено';
+        moduleError.contract = 'Поле не заполнено'
       }
       if (Object.keys(moduleError).length > 0) {
-        errors[idx] = moduleError;
+        errors[idx] = moduleError
       }
-    });
+    })
 
-    setModuleErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    setModuleErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const sendThisDocument = () => {
     if (!validateModules()) return
@@ -317,40 +317,40 @@ const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEdita
 
   const handleViewDoc = async () => {
     try {
-      const response = await exportInformationAboutStaffing({ commonData });
-      if (response.status !== 200) throw new Error("Ошибка при создании файла");
+      const response = await exportInformationAboutStaffing({ commonData })
+      if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-      const blob = response.data;
-      setShowModal(true);
+      const blob = response.data
+      setShowModal(true)
 
       setTimeout(() => {
         if (containerRef.current) {
-          containerRef.current.innerHTML = "";
-          renderAsync(blob, containerRef.current);
+          containerRef.current.innerHTML = ""
+          renderAsync(blob, containerRef.current)
         }
-      }, 1000);
+      }, 1000)
     } catch (error) {
-      console.error("Ошибка просмотра документа:", error);
+      console.error("Ошибка просмотра документа:", error)
     }
-  };
+  }
 
   const handleDownload = async () => {
     try {
-      const response = await exportInformationAboutStaffing({ commonData });
-      if (response.status !== 200) throw new Error("Ошибка при создании файла");
+      const response = await exportInformationAboutStaffing({ commonData })
+      if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Сведения_о_кадровом_обеспечении.docx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
+      const blob = response.data
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `Сведения_о_кадровом_обеспечении.docx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("Ошибка скачивания файла:", error);
+      console.error("Ошибка скачивания файла:", error)
     }
-  };
+  }
 
   return (
     <Container className='mt-4'>

@@ -1,19 +1,19 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { Form, Button, Container, Card, Modal, Spinner, Col } from "react-bootstrap";
-import InputField from "../../CustomComponents/InputFields/InputField";
-import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup";
-import "bootstrap/dist/css/bootstrap.min.css";
-import { exportEducationPlan, sendDocument } from '../../../http/documentAPI';
-import { renderAsync } from 'docx-preview';
+import { useState, useEffect, useRef, useContext } from "react"
+import { Form, Button, Container, Card, Modal, Spinner, Col } from "react-bootstrap"
+import InputField from "../../CustomComponents/InputFields/InputField"
+import ModuleGroup from "../../PrimaryFormComponents/Module/ModuleGroup"
+import "bootstrap/dist/css/bootstrap.min.css"
+import { exportEducationPlan, sendDocument } from '../../../http/documentAPI'
+import { renderAsync } from 'docx-preview'
 import DocumentFormField from '../../CustomComponents/InputFields/DocumentFormField'
-import ReviwerTools from "../../CustomComponents/Other/ReviewerTools";
+import ReviwerTools from "../../CustomComponents/Other/ReviewerTools"
 
-const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
+const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onChange, onSave, isEditable, isChecking }) => {
     const [modules, setModules] = useState([])
-    const [showModal, setShowModal] = useState(false);
-    const [validationErrors, setValidationErrors] = useState({});
+    const [showModal, setShowModal] = useState(false)
+    const [validationErrors, setValidationErrors] = useState({})
     const [moduleValidationErrors, setModuleValidationErrors] = useState({})
-    const containerRef = useRef(null);
+    const containerRef = useRef(null)
     const commonData = documentsData.commonData
     const educationFormOptions = [
         { label: 'Очная', value: 'Очная' },
@@ -26,42 +26,65 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
             setModules(commonData?.modules || [])
     }, [commonData])
 
+
+    const flattenErrors = (errors) => {
+        const result = {}
+
+        Object.values(errors).forEach((section) => {
+            if (section && typeof section === 'object' && !Array.isArray(section)) {
+                Object.assign(result, section) // просто добавляем поля program_name, education_form и т.д.
+            }
+        })
+
+        return result
+    }
+
+
+    useEffect(() => {
+        if (commonData?.errors && !isChecking) {
+            const commonErrors = flattenErrors(commonData?.errors || {})
+            setValidationErrors({
+                ...commonErrors,
+            })
+        }
+    }, [commonData?.errors])
+
     const handleViewDoc = async () => {
         try {
-            const response = await exportEducationPlan({ commonData });
-            if (response.status !== 200) throw new Error("Ошибка при создании файла");
+            const response = await exportEducationPlan({ commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-            const blob = response.data;
-            setShowModal(true);
+            const blob = response.data
+            setShowModal(true)
 
             setTimeout(() => {
                 if (containerRef.current) {
-                    containerRef.current.innerHTML = "";
-                    renderAsync(blob, containerRef.current);
+                    containerRef.current.innerHTML = ""
+                    renderAsync(blob, containerRef.current)
                 }
-            }, 1000);
+            }, 1000)
         } catch (error) {
-            console.error("Ошибка просмотра документа:", error);
+            console.error("Ошибка просмотра документа:", error)
         }
-    };
+    }
 
     const handleDownload = async () => {
         try {
-            const response = await exportEducationPlan({ commonData });
-            if (response.status !== 200) throw new Error("Ошибка при создании файла");
+            const response = await exportEducationPlan({ commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-            const blob = response.data;
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement("a");
-            a.href = url;
-            a.download = `Учебный_план.docx`;
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
+            const blob = response.data
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `Учебный_план.docx`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
         } catch (error) {
-            console.error("Ошибка скачивания файла:", error);
+            console.error("Ошибка скачивания файла:", error)
         }
-    };
+    }
 
     const addModule = () => {
         const newModule = {
@@ -72,9 +95,9 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
             h_pr: '',
             h_sr: '',
             control_form: ''
-        };
+        }
 
-        const updatedModules = [...modules, newModule];
+        const updatedModules = [...modules, newModule]
 
         setDocumentsData(prev => ({
             ...prev,
@@ -82,11 +105,11 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 ...prev.commonData,
                 modules: updatedModules
             }
-        }));
-    };
+        }))
+    }
 
     const removeModule = (index) => {
-        const updatedModules = modules.filter((_, i) => i !== index);
+        const updatedModules = modules.filter((_, i) => i !== index)
 
         setDocumentsData(prev => ({
             ...prev,
@@ -94,12 +117,12 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 ...prev.commonData,
                 modules: updatedModules
             }
-        }));
-    };
+        }))
+    }
 
 
     const handleModuleChange = (index, newData) => {
-        const updatedModules = modules.map((module, i) => i === index ? newData : module);
+        const updatedModules = modules.map((module, i) => i === index ? newData : module)
 
         if (
             updatedModules[index].h_lk ||
@@ -111,7 +134,7 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 parseFloat(updatedModules[index].h_lk || 0) +
                 parseFloat(updatedModules[index].h_lb || 0) +
                 parseFloat(updatedModules[index].h_pr || 0) +
-                parseFloat(updatedModules[index].h_sr || 0);
+                parseFloat(updatedModules[index].h_sr || 0)
         }
 
         setDocumentsData(prev => ({
@@ -120,37 +143,37 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 ...prev.commonData,
                 modules: updatedModules
             }
-        }));
-    };
+        }))
+    }
 
     const handleSelectChange = (val, field) => {
         handleInputChange({ target: { value: val.value, name: field } })
     }
 
     const handleInputChange = (e) => {
-        const { name, value } = e.target;
+        const { name, value } = e.target
 
         setDocumentsData(prev => {
-            const updated = { ...prev };
+            const updated = { ...prev }
 
             const updateNestedData = (obj, path, val) => {
-                const keys = path.split('.');
-                const lastKey = keys.pop();
+                const keys = path.split('.')
+                const lastKey = keys.pop()
                 const nested = keys.reduce((acc, key) => {
-                    if (!acc[key]) acc[key] = {};
-                    return acc[key];
-                }, obj);
-                nested[lastKey] = val ?? ''; // если null — ставим ''
-            };
+                    if (!acc[key]) acc[key] = {}
+                    return acc[key]
+                }, obj)
+                nested[lastKey] = val ?? '' // если null — ставим ''
+            }
 
-            const path = name.replace(/^commonData\./, '');
-            updateNestedData(updated.commonData, path, value);
+            const path = name.replace(/^commonData\./, '')
+            updateNestedData(updated.commonData, path, value)
 
             // Выставляем статус "Редактируется"
             onChange(name)
-            return updated;
-        });
-    };
+            return updated
+        })
+    }
 
     const sendThisDocument = () => {
         const dataToSend = {
@@ -167,41 +190,41 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
 
         // Проверка основных полей
         if (!commonData?.program?.program_goal?.trim()) {
-            errors["program_goal"] = "Поле не заполнено";
+            errors["program_goal"] = "Поле не заполнено"
         }
 
         if (!commonData?.program?.education_form) {
-            errors["education_form"] = "Поле не заполнено";
+            errors["education_form"] = "Поле не заполнено"
         }
 
         if (!commonData?.hours?.academic) {
-            errors["academic"] = "Поле не заполнено";
+            errors["academic"] = "Поле не заполнено"
         }
 
         if (!commonData?.lesson?.count) {
-            errors["lesson_count"] = "Поле не заполнено";
+            errors["lesson_count"] = "Поле не заполнено"
         }
 
         if (!commonData?.lesson?.duration) {
-            errors["lesson_duration"] = "Поле не заполнено";
+            errors["lesson_duration"] = "Поле не заполнено"
         }
 
         // Проверка каждого модуля
         modules.forEach((module, index) => {
-            const currentModuleErrors = [];
+            const currentModuleErrors = []
 
             if (!module.name?.trim()) {
-                currentModuleErrors.push("Не указано название модуля");
+                currentModuleErrors.push("Не указано название модуля")
             }
 
-            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr;
+            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr
 
             if (!hasHours) {
-                currentModuleErrors.push("Не указаны часы ни в одном из полей");
+                currentModuleErrors.push("Не указаны часы ни в одном из полей")
             }
 
             if (!module.control_form?.trim()) {
-                currentModuleErrors.push("Не указана форма контроля");
+                currentModuleErrors.push("Не указана форма контроля")
             }
 
             // Приводим к единой структуре
@@ -209,24 +232,24 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 moduleErrors[index] = {
                     module: currentModuleErrors,
                     submodules: {} // даже если нет подмодулей — для универсального отображения
-                };
+                }
             }
-        });
+        })
 
         if (modules.length < 1)
             moduleErrors.count = ['Добавьте хотя бы один модуль']
 
         setValidationErrors(errors)
         setModuleValidationErrors(moduleErrors)
-        return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0;
+        return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0
     }
 
     const handleSubmit = (e) => {
-        e.preventDefault();
+        e.preventDefault()
         if (!validateForm()) return
         sendThisDocument()
         onSave()
-    };
+    }
 
     return (
         <Container className='mt-4'>
@@ -337,7 +360,7 @@ const EducationalPlanForm = ({ userData, requestID, documentsData, setDocumentsD
                 </Modal.Footer>
             </Modal>
         </Container>
-    );
-};
+    )
+}
 
-export default EducationalPlanForm;
+export default EducationalPlanForm

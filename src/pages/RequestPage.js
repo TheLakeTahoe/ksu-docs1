@@ -1,8 +1,8 @@
-import React from "react";
-import { Container } from "react-bootstrap";
-import CustomNavbar from "../components/CustomComponents/Other/Navbar";
+import React from "react"
+import { Container } from "react-bootstrap"
+import CustomNavbar from "../components/CustomComponents/Other/Navbar"
 import PrimaryForm from '../components/Forms/PrimaryForm'
-import { useAuth } from "../context/AuthContext";
+import { useAuth } from "../context/AuthContext"
 
 function RequestPage() {
 
@@ -15,7 +15,7 @@ function RequestPage() {
                 <PrimaryForm userID={user ? user.id : ''}/>
             </Container>
         </Container>
-    );
+    )
 }
 
-export default RequestPage;
+export default RequestPage

@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import MainDataForm from '../RegistrationFormComponents/RegistrationFormMD';
-import PersonalDataForm from '../RegistrationFormComponents/RegistrationFormPD';
+import { useState } from 'react'
+import MainDataForm from '../RegistrationFormComponents/RegistrationFormMD'
+import PersonalDataForm from '../RegistrationFormComponents/RegistrationFormPD'
 import './Forms.css'
 
 function RegistrationPage({updateHeight}) {
-    const [step, setStep] = useState('md'); // 'md' или 'pd'
+    const [step, setStep] = useState('md') // 'md' или 'pd'
     const [formData, setFormData] = useState({
         login: '',
         email: '',
@@ -24,8 +24,8 @@ function RegistrationPage({updateHeight}) {
         setFormData((prevData) => ({
             ...prevData,
             ...newData
-        }));
-    };
+        }))
+    }
 
     return (
         <div>
@@ -45,7 +45,7 @@ function RegistrationPage({updateHeight}) {
                 />
             )}
         </div>
-    );
+    )
 }
 
-export default RegistrationPage;
+export default RegistrationPage

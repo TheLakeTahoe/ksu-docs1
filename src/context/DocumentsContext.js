@@ -1,6 +1,6 @@
-import React, { createContext, useState } from 'react';
+import React, { createContext, useState } from 'react'
 
-export const DocumentsContext = createContext();
+export const DocumentsContext = createContext()
 
 export const DocumentsProvider = ({ children }) => {
     const [documentsData, setDocumentsData] = useState({
@@ -115,45 +115,23 @@ export const DocumentsProvider = ({ children }) => {
             'commonData.hours.overall',
             'commonData.lesson.count',
             'commonData.lesson.duration',
-            'commonData.aspects',
-            'commonData.modules.name',
-            'commonData.modules.h_overall'
         ],
 
         // EducationalPlan
         2: [
-            'commonData.program.program_type',
-            'commonData.program.program_name',
             'commonData.program.program_goal',
             'commonData.program.listeners_category',
             'commonData.program.education_form',
             'commonData.hours.academic',
             'commonData.lesson.count',
             'commonData.lesson.duration',
-            'commonData.modules.name',
-            'commonData.modules.h_overall',
-            'commonData.modules.h_lk',
-            'commonData.modules.h_lb',
-            'commonData.modules.h_pr',
-            'commonData.modules.h_sr',
-            'commonData.modules.control_form',
         ],
 
         // EducationalAndThematicPlan
         3: [
-            'commonData.program.program_type',
-            'commonData.program.program_name',
             'commonData.program.program_goal',
             'commonData.program.standart_compliance',
             'commonData.program.education_form',
-            'commonData.aspects',
-            'commonData.modules.name',
-            'commonData.modules.h_overall',
-            'commonData.modules.h_lk',
-            'commonData.modules.h_lb',
-            'commonData.modules.h_pr',
-            'commonData.modules.h_sr',
-            'commonData.modules.control_form',
         ],
 
         // EnsuringTheEducationalProccess
@@ -169,5 +147,5 @@ export const DocumentsProvider = ({ children }) => {
         <DocumentsContext.Provider value={{ documentsData, setDocumentsData, commonDataFieldsName }}>
             {children}
         </DocumentsContext.Provider>
-    );
-};
+    )
+}

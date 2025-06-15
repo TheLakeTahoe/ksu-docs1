@@ -1,4 +1,4 @@
-import { $host } from './index';
+import { $host } from './index'
 
 export const getDataForPrimaryForm = async () => {
     try {
@@ -10,7 +10,16 @@ export const getDataForPrimaryForm = async () => {
         data.push(departments, program_types, lesson_schedules, types_graduation_doc)
         return data
     } catch (error) {
-        console.log(error)
+        console.error(error)
+    }
+}
+
+export const getDepartmentsData = async () => {
+    try {
+        const response = await $host.get(`api/data/get_ksu_department`)
+        return response
+    } catch (error) {
+        console.error(error)
     }
 }
 
@@ -19,7 +28,7 @@ export const getAllEducation = async () => {
         const response = await $host.get(`api/data/get_education`)
         return response
     } catch (error) {
-        console.log(error)
+        console.error(error)
     }
 }
 
@@ -28,7 +37,7 @@ export const getPrimaryFormData = async (primary_form_id) => {
         const response = await $host.post(`api/data/get_primary_form_data`, { primary_form_id })
         return response
     } catch (error) {
-        console.log(error)
+        console.error(error)
     }
 }
 
@@ -37,7 +46,7 @@ export const getFormAspects = async (primary_form_id) => {
         const response = await $host.post(`api/data/get_form_aspects`, { primary_form_id })
         return response
     } catch (error) {
-        console.log(error)
+        console.error(error)
     }
 }
 
@@ -46,6 +55,6 @@ export const getFormModules = async (primary_form_id) => {
         const response = await $host.post(`api/data/get_form_modules`, { primary_form_id })
         return response
     } catch (error) {
-        console.log(error)
+        console.error(error)
     }
 }

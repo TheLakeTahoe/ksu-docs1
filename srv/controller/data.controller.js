@@ -1,54 +1,54 @@
-const { QueryTypes } = require('sequelize');
-const db = require('../db.js');
+const { QueryTypes } = require('sequelize')
+const db = require('../db.js')
 
 class DataController {
     async getEducations(req, res) {
         try {
-            const [rows] = await db.query('Select * From education'); // Деструктурируем первый элемент
-            res.json(rows);
+            const [rows] = await db.query('Select * From education') // Деструктурируем первый элемент
+            res.json(rows)
         } catch (error) {
-            console.error('Ошибка при получении данных об образовании:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных об образовании:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
     async getKSUDeparments(req, res) {
         try {
-            const [rows] = await db.query('Select * From ksu_departments'); // Деструктурируем первый элемент
-            res.json(rows);
+            const [rows] = await db.query('Select * From ksu_departments') // Деструктурируем первый элемент
+            res.json(rows)
         } catch (error) {
-            console.error('Ошибка при получении данных о структурных подразделениях:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных о структурных подразделениях:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
     async getProgramTypes(req, res) {
         try {
-            const [rows] = await db.query('Select * From program_types'); // Деструктурируем первый элемент
-            res.json(rows);
+            const [rows] = await db.query('Select * From program_types') // Деструктурируем первый элемент
+            res.json(rows)
         } catch (error) {
-            console.error('Ошибка при получении данных о типах программ:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных о типах программ:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
     async getLessonShedules(req, res) {
         try {
-            const [rows] = await db.query('Select * From lesson_shedules'); // Деструктурируем первый элемент
-            res.json(rows);
+            const [rows] = await db.query('Select * From lesson_shedules') // Деструктурируем первый элемент
+            res.json(rows)
         } catch (error) {
-            console.error('Ошибка при получении данных о режимах занятий:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных о режимах занятий:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
     async getTypesGraduationDoc(req, res) {
         try {
-            const [rows] = await db.query('Select * From type_grad_docs'); // Деструктурируем первый элемент
-            res.json(rows);
+            const [rows] = await db.query('Select * From type_grad_docs') // Деструктурируем первый элемент
+            res.json(rows)
         } catch (error) {
-            console.error('Ошибка при получении данных о типах документов об окончании:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных о типах документов об окончании:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
@@ -67,8 +67,8 @@ class DataController {
             return res.json({ data })
 
         } catch (error) {
-            console.error('Ошибка при получении данных для первичной формы:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных для первичной формы:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
@@ -84,8 +84,8 @@ class DataController {
             })
             return res.json({ aspects })
         } catch (error) {
-            console.error('Ошибка при получении данных об аспектах:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных об аспектах:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 
@@ -101,10 +101,10 @@ class DataController {
             })
             return res.json({ modules })
         } catch (error) {
-            console.error('Ошибка при получении данных о модулях:', error);
-            res.status(200).json({ message: 'Не удалось получить данные' });
+            console.error('Ошибка при получении данных о модулях:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
         }
     }
 }
 
-module.exports = new DataController();
+module.exports = new DataController()

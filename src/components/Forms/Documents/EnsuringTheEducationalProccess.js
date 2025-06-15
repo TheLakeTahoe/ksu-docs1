@@ -13,10 +13,10 @@ const roomOptions = [
 
 const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData, setDocumentsData, isEditable, isChecking, onSave }) => {
   const [moduleList, setModuleList] = useState([])
-  const [showModal, setShowModal] = useState(false);
-  const [moduleErrors, setModuleErrors] = useState({});
+  const [showModal, setShowModal] = useState(false)
+  const [moduleErrors, setModuleErrors] = useState({})
   const commonData = documentsData.commonData
-  const containerRef = useRef(null);
+  const containerRef = useRef(null)
 
   useEffect(() => {
     if (commonData && Object.keys(commonData?.modules).length > 0)
@@ -47,56 +47,56 @@ const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData
 
   const handleViewDoc = async () => {
     try {
-      const response = await exportEnsuringTheEducationalProccess({ commonData });
-      if (response.status !== 200) throw new Error("Ошибка при создании файла");
+      const response = await exportEnsuringTheEducationalProccess({ commonData })
+      if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-      const blob = response.data;
-      setShowModal(true);
+      const blob = response.data
+      setShowModal(true)
 
       setTimeout(() => {
         if (containerRef.current) {
-          containerRef.current.innerHTML = "";
-          renderAsync(blob, containerRef.current);
+          containerRef.current.innerHTML = ""
+          renderAsync(blob, containerRef.current)
         }
-      }, 1000);
+      }, 1000)
     } catch (error) {
-      console.error("Ошибка просмотра документа:", error);
+      console.error("Ошибка просмотра документа:", error)
     }
-  };
+  }
 
   const handleDownload = async () => {
     try {
-      const response = await exportEnsuringTheEducationalProccess({ commonData });
-      if (response.status !== 200) throw new Error("Ошибка при создании файла");
+      const response = await exportEnsuringTheEducationalProccess({ commonData })
+      if (response.status !== 200) throw new Error("Ошибка при создании файла")
 
-      const blob = response.data;
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `Обеспечение_образовательного_процесса.docx`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
+      const blob = response.data
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `Обеспечение_образовательного_процесса.docx`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
     } catch (error) {
-      console.error("Ошибка скачивания файла:", error);
+      console.error("Ошибка скачивания файла:", error)
     }
-  };
+  }
 
   const validateModules = () => {
-    const errors = {};
+    const errors = {}
     moduleList.forEach((module, idx) => {
-      const moduleError = {};
+      const moduleError = {}
       if (!module?.ksu_data?.auditory) {
-        moduleError.auditory = 'Выберите учебную аудиторию';
+        moduleError.auditory = 'Выберите учебную аудиторию'
       }
       if (Object.keys(moduleError).length > 0) {
-        errors[idx] = moduleError;
+        errors[idx] = moduleError
       }
-    });
+    })
 
-    setModuleErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    setModuleErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const sendThisDocument = () => {
     if (!validateModules())

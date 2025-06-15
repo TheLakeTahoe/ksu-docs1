@@ -433,6 +433,10 @@ const account = sequelize.define('account', {
         type: DataTypes.INTEGER,
         allowNull: true
     },
+    ksu_department_id: {
+        type: DataTypes.INTEGER,                // Подразделение КГУ для проверяющего
+        allowNull: true
+    },
     created: {                                  // Дата создания
         type: DataTypes.DATE,
         defaultValue: DataTypes.NOW,
@@ -504,10 +508,12 @@ const requestStep = sequelize.define('request_step', {
     name: {
         type: DataTypes.STRING,
         allowNull: false,
+        unique: true
     },
     role_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: true,
+        unique: true
     }
 }, {
     timestamps: false
@@ -547,17 +553,18 @@ documentGroup.belongsTo(groupStatus, { foreignKey: 'group_status_id' })
 documentGroup.belongsTo(requestStep, { foreignKey: 'step_id' })
 
 // Связи request_step
-requestStep.hasMany(documentGroup, {foreignKey: 'step_id'})
+requestStep.hasMany(documentGroup, { foreignKey: 'step_id' })
 
 // Связи account
-account.belongsTo(userRole, { foreignKey: 'user_role_id' })
+account.belongsTo(ksuDepartment, { foreignKey: 'ksu_department_id' })
+account.belongsTo(userRole, { foreignKey: 'role_id' })
 account.belongsTo(workplace, { foreignKey: 'workplace_id' })
 account.belongsTo(position, { foreignKey: 'position_id' })
 account.belongsTo(education, { foreignKey: 'education_id' })
 account.hasMany(primaryForm, { foreignKey: 'account_id' })
 
 // Связи user_roles
-userRole.hasMany(account, { foreignKey: 'user_role_id' })
+userRole.hasMany(account, { foreignKey: 'role_id' })
 
 // Связи education
 education.hasMany(account, { foreignKey: 'education_id' })

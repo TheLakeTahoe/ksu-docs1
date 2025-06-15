@@ -1,6 +1,6 @@
-import React from 'react';
-import { Container, Row, Col, Button } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import React from 'react'
+import { Container, Row, Col, Button } from 'react-bootstrap'
+import { useNavigate } from 'react-router-dom'
 
 const NotFoundPage = () => {
     const navigate = useNavigate()
@@ -26,7 +26,7 @@ const NotFoundPage = () => {
                 </Row>
             </Container>
         </div>
-    );
-};
+    )
+}
 
-export default NotFoundPage;
+export default NotFoundPage

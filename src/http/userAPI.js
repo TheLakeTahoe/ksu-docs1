@@ -6,7 +6,7 @@ export const authorize = async (formValues) => {
         return response.data
 
     } catch (error) {
-        console.log('Ошибка входа: ', error)
+        console.error('Ошибка входа: ', error)
     }
 }
 
@@ -15,7 +15,7 @@ export const checkField = async (field, value) => {
         const response = await $host.post(`api/user/check_field`, { field, value })
         return response.data.message === 'Y' ? true : false
     } catch (error) {
-        console.log('Ошибка проверки полей: ', error)
+        console.error('Ошибка проверки полей: ', error)
     }
 }
 
@@ -30,7 +30,7 @@ export const register = async (formValues) => {
         return response.data
 
     } catch (error) {
-        console.log('Ошибка при регистрации: ', error)
+        console.error('Ошибка при регистрации: ', error)
     }
 }
 
@@ -40,6 +40,6 @@ export const getUserData = async (userData) => {
         return response.data
 
     } catch (error) {
-        console.log('Ошибка при получении данных пользователя: ', error)
+        console.error('Ошибка при получении данных пользователя: ', error)
     }
 }

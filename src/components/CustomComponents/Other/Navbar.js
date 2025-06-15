@@ -1,8 +1,8 @@
-import { Container, Navbar, Button } from 'react-bootstrap';
-import { FaClipboardList, FaUserCircle } from "react-icons/fa";
-import logo from '../../../assets/logo/MainLogo.jpg';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import { useNavigate } from 'react-router-dom';
+import { Container, Navbar, Button } from 'react-bootstrap'
+import { FaClipboardList, FaUserCircle } from "react-icons/fa"
+import logo from '../../../assets/logo/MainLogo.jpg'
+import 'bootstrap/dist/css/bootstrap.min.css'
+import { useNavigate } from 'react-router-dom'
 
 const CustomNavbar = ({ full_name }) => {
   const navigate = useNavigate()
@@ -98,7 +98,7 @@ const CustomNavbar = ({ full_name }) => {
         </Navbar.Collapse>
       </Container>
     </Navbar>
-  );
+  )
 }
 
-export default CustomNavbar;
+export default CustomNavbar

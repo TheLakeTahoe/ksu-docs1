@@ -1,16 +1,16 @@
-import { Col, InputGroup, Row } from 'react-bootstrap';
-import InputField from './InputField';
-import { useEffect, useState } from 'react';
+import { Col, InputGroup, Row } from 'react-bootstrap'
+import InputField from './InputField'
+import { useEffect, useState } from 'react'
 
 const buildErrorPath = (name) => {
-    const [prefix, ...rest] = name.split('.');
-    return `${prefix}.errors.${rest.join('.')}`;
-};
+    const [prefix, ...rest] = name.split('.')
+    return `${prefix}.errors.${rest.join('.')}`
+}
 
 const buildCheckboxPath = (name) => {
-    const [prefix, ...rest] = name.split('.');
-    return `${prefix}.checkbox.${rest.join('.')}`;
-};
+    const [prefix, ...rest] = name.split('.')
+    return `${prefix}.checkbox.${rest.join('.')}`
+}
 
 const ValidatedField = ({
     label,
@@ -25,23 +25,23 @@ const ValidatedField = ({
     commentValue,
     checkboxValue,
 }) => {
-    const errorName = buildErrorPath(name);
+    const errorName = buildErrorPath(name)
     const checkboxName = buildCheckboxPath(name)
 
     const handleCheckboxToggle = (e) => {
-        const checked = e.target.checked;
+        const checked = e.target.checked
 
         // обновим local состояние, если используешь useState (можно убрать вообще, если читаешь только из props)
-        // setHasError(checked); — больше не нужен, если `checkboxValue` приходит из родителя
+        // setHasError(checked) — больше не нужен, если `checkboxValue` приходит из родителя
 
         // отправим в родитель через onChange
-        onChange({ target: { name: checkboxName, value: checked } });
+        onChange({ target: { name: checkboxName, value: checked } })
 
         // если сняли галочку — очищаем ошибку
         if (!checked && commentValue) {
-            onChange({ target: { name: errorName, value: '' } });
+            onChange({ target: { name: errorName, value: '' } })
         }
-    };
+    }
 
     return (
         <>
@@ -56,7 +56,7 @@ const ValidatedField = ({
                                 isSelect={isSelect}
                                 options={options}
                                 onChange={onChange}
-                                disabled={!disabled}
+                                disabled={true}
                                 error={error}
                             />
                         </Col>
@@ -96,7 +96,7 @@ const ValidatedField = ({
                 />
             )}
         </>
-    );
-};
+    )
+}
 
-export default ValidatedField;
+export default ValidatedField

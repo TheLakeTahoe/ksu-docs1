@@ -1,25 +1,25 @@
-import Nav from 'react-bootstrap/Nav';
-import { useRef, useState, useEffect, useCallback } from 'react';
-import { Col, Container } from 'react-bootstrap';
-import { motion, AnimatePresence } from 'framer-motion';
-import RegistrationPage from './RegistrationForm';
-import LoginForm from './LoginForm';
-// import ResetRequestPage from '../ResetRequestPage';
+import Nav from 'react-bootstrap/Nav'
+import { useRef, useState, useEffect, useCallback } from 'react'
+import { Col, Container } from 'react-bootstrap'
+import { motion, AnimatePresence } from 'framer-motion'
+import RegistrationPage from './RegistrationForm'
+import LoginForm from './LoginForm'
+// import ResetRequestPage from '../ResetRequestPage'
 
 function AuthForms() {
-  const [activeTab, setActiveTab] = useState('login');
-  const [containerHeight, setContainerHeight] = useState(null);
+  const [activeTab, setActiveTab] = useState('login')
+  const [containerHeight, setContainerHeight] = useState(null)
   const contentRef = useRef(null)
 
   const updateHeight = useCallback(() => {
     if (contentRef.current) {
-      setContainerHeight(contentRef.current.scrollHeight + 100);
+      setContainerHeight(contentRef.current.scrollHeight + 100)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    updateHeight();
-  }, [activeTab, updateHeight]);
+    updateHeight()
+  }, [activeTab, updateHeight])
 
   return (
     <Container
@@ -118,7 +118,7 @@ function AuthForms() {
         </AnimatePresence>
       </div>
     </Container>
-  );
+  )
 }
 
-export default AuthForms;
+export default AuthForms

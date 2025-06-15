@@ -1,8 +1,8 @@
-import React from "react";
-import { Container } from "react-bootstrap";
-import CustomNavbar from "../components/CustomComponents/Other/Navbar";
-import SettingsForm from "../components/Forms/SettingsForm";
-import { useAuth } from "../context/AuthContext";
+import React from "react"
+import { Container } from "react-bootstrap"
+import CustomNavbar from "../components/CustomComponents/Other/Navbar"
+import SettingsForm from "../components/Forms/SettingsForm"
+import { useAuth } from "../context/AuthContext"
 
 function RequestPage() {
 
@@ -15,7 +15,7 @@ function RequestPage() {
                 <SettingsForm userData={user}/>
             </Container>
         </Container>
-    );
+    )
 }
 
-export default RequestPage;
+export default RequestPage
