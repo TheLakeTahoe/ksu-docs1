@@ -1,44 +1,71 @@
-import React from 'react';
-import { Card, Col } from 'react-bootstrap';
-import InputField from '../../CustomComponents/InputFields/InputField';
+import React from 'react'
+import { Card, Col, Button } from 'react-bootstrap'
+import InputField from '../../CustomComponents/InputFields/InputField'
 
-const CoordinatorForm = ({ coordinator, onCoordinatorChange = {} }) => {
+const CoordinatorForm = ({ coordinator, onCoordinatorChange, coordinatorOptions, handleCoordinatorSelectChange, onSelectSpecialValue, setCoordinator }) => {
+    const currentCoordinator = coordinator[0] || {}
 
-    const fields = [
-        { label: 'Фамилия', name: 'f_name', type: 'text' },
-        { label: 'Имя', name: 'm_name', type: 'text' },
-        { label: 'Отчество', name: 'l_name', type: 'text' },
-        { label: 'Телефон', name: 'phone', type: 'phone' },
-        { label: 'Email', name: 'email', type: 'text' },
-        { label: 'Адрес', name: 'address', type: 'text' },
-    ];
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+        const updatedCoordinator = [{ ...currentCoordinator, [name]: value }]
+        onCoordinatorChange(updatedCoordinator)
+    }
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        onCoordinatorChange({ ...coordinator, [name]: value });
-    };
+    const handleClearCoordinator = () => {
+        // Очищаем данные координатора, устанавливая пустой массив
+        setCoordinator([{}])
+    }
 
     return (
         <Card as={Col} xs={12} md={4} lg={4} className="coordinator-form-card">
-            <Card.Header className="coordinator-form-header">
-                <h6>Координатор</h6>
+            <Card.Header className="coordinator-form-header d-flex justify-content-between align-items-center">
+                <h6 className="mb-0">Координатор</h6>
+                <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={handleClearCoordinator}
+                    disabled={!currentCoordinator.full_name} // Делаем кнопку неактивной если нет координатора
+                >
+                    Очистить
+                </Button>
             </Card.Header>
             <Card.Body>
-                {/* Динамически отображаем поля формы */}
-                {fields.map((field, i) => (
-                    <InputField
-                        key={i}
-                        label={field.label}
-                        type={field.type}
-                        name={field.name}
-                        value={coordinator[field.name]}
-                        onChange={handleChange}
-                        isPhoneNumber={field.type === 'phone' ? true : false}
-                    />
-                ))}
+                <InputField
+                    label='Координатор'
+                    isSelect
+                    name='full_name'
+                    options={[...coordinatorOptions, { value: '__add__', label: '+ Добавить координатора' }]}
+                    value={coordinatorOptions.find(option => option.value === currentCoordinator.full_name) || null}
+                    onChange={(e) => {
+                        if (e.value === '__add__') {
+                            onSelectSpecialValue?.()
+                        } else {
+                            handleCoordinatorSelectChange(0, e)
+                        }
+                    }}
+                />
+                <InputField
+                    label='Телефон'
+                    name='phone'
+                    value={currentCoordinator.phone || ''}
+                    onChange={handleInputChange}
+                    isPhoneNumber
+                />
+                <InputField
+                    label='EMail'
+                    name='email'
+                    value={currentCoordinator.email || ''}
+                    onChange={handleInputChange}
+                />
+                <InputField
+                    label='Адрес'
+                    name='address'
+                    value={currentCoordinator.address || ''}
+                    onChange={handleInputChange}
+                />
             </Card.Body>
         </Card>
-    );
-};
+    )
+}
 
-export default CoordinatorForm;
+export default CoordinatorForm

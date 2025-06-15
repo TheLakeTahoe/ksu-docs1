@@ -12,6 +12,18 @@ class DataController {
         }
     }
 
+    async getTeachers(req, res) {
+        try {
+            const [rows] = await db.query(`Select t.id, contract, degree, institution, exp_subject, exp_total, full_name, p.name As position, w.name As workplace From teachers As t
+                                        Left Join workplaces As w On w.id = t.workplace_id
+                                        Left Join positions As p On p.id = t.position_id `) // Деструктурируем первый элемент
+            res.json(rows)
+        } catch (error) {
+            console.error('Ошибка при получении данных о преподавателях:', error)
+            res.status(200).json({ message: 'Не удалось получить данные' })
+        }
+    }
+
     async getKSUDeparments(req, res) {
         try {
             const [rows] = await db.query('Select * From ksu_departments') // Деструктурируем первый элемент

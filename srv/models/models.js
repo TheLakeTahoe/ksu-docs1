@@ -296,7 +296,7 @@ const primaryForm = sequelize.define('primary_form', {
         allowNull: false,
     },
     program_description: {                       // Описание программы
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
     },
     target_audience: {                           // Целевая аудитория
@@ -374,11 +374,18 @@ const teacher = sequelize.define('teacher', {
         type: DataTypes.INTEGER,
         allowNull: false
     },
-    education_id: {                              // Должность
-        type: DataTypes.INTEGER,
+    institution: {                              // Должность
+        type: DataTypes.STRING,
         allowNull: true
     },
-
+    degree: {
+        type: DataTypes.STRING,
+        allowNull: true
+    },
+    contract: {
+        type: DataTypes.STRING,
+        allowNull: true
+    }
 }, {
     timestamps: false
 })
@@ -568,7 +575,6 @@ userRole.hasMany(account, { foreignKey: 'role_id' })
 
 // Связи education
 education.hasMany(account, { foreignKey: 'education_id' })
-education.hasMany(teacher, { foreignKey: 'education_id' })
 
 // Связи workplaces
 workplace.hasMany(account, { foreignKey: 'workplace_id' })
@@ -581,7 +587,6 @@ position.hasMany(teacher, { foreignKey: 'position_id' })
 // Связи teacher
 teacher.belongsTo(workplace, { foreignKey: 'workplace_id' })
 teacher.belongsTo(position, { foreignKey: 'position_id' })
-teacher.belongsTo(education, { foreignKey: 'education_id' })
 
 // Связи group_statuses
 groupStatus.hasMany(documentGroup, { foreignKey: 'group_status_id' })

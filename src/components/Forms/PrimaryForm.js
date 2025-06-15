@@ -5,7 +5,7 @@ import AspectGroup from '../PrimaryFormComponents/Aspect/AspectGroup'
 import ModuleGroup from '../PrimaryFormComponents/Module/ModuleGroup'
 import CoordinatorForm from '../PrimaryFormComponents/Coordinator/CoordinatorForm'
 import InputField from '../CustomComponents/InputFields/InputField'
-import { getDataForPrimaryForm } from '../../http/dataAPI'
+import { getAllTeachers, getDataForPrimaryForm } from '../../http/dataAPI'
 import { sendRequest } from '../../http/requestAPI'
 import { useNavigate } from 'react-router-dom'
 
@@ -41,12 +41,23 @@ const PrimaryForm = ({ userID }) => {
 
     const [showModal, setShowModal] = useState(false)
     const [showAddTeacherModal, setShowAddTeacherModal] = useState(false)
+    const [showAddCoordinatorModal, setShowAddCoordinatorModal] = useState(false)
+
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [message, setMessage] = useState(null)
+    const numberFields = ['program_hours', 'education_cost']
 
     const [aspects, setAspects] = useState([])
     const [modules, setModules] = useState([])
+
     const [coordinator, setCoordinator] = useState([])
+    const [coordinatorOptions, setCoordinatorOptions] = useState([])
+    const [newCoordinator, setNewCoordinator] = useState({
+        full_name: '',
+        workplace: '',
+        education: '',
+        exp_total: ''
+    })
 
     const [teachers, setTeachers] = useState([])
     const [teacherOptions, setTeachersOptions] = useState([])
@@ -62,6 +73,7 @@ const PrimaryForm = ({ userID }) => {
     const [aspectValidationErrors, setAspectValidationErrors] = useState({})
     const [teacherValidationErrors, setTeacherValidationErrors] = useState({})
     const [teacherModalErrors, setTeacherModalErrors] = useState({})
+    const [coordinatorModalErrors, setCoordinatorModalErrors] = useState({})
 
     const [ksuDepartmentOptions, setKSUDepartmentOptions] = useState([])
     const [programTypeOptions, setProgramTypeOptions] = useState([])
@@ -100,10 +112,30 @@ const PrimaryForm = ({ userID }) => {
                 }))
                 setTypeGraduationDocOptions(typeGraduationDocData)
             } catch (error) {
-                console.error('Ошибка при получении данных о структурных подразделениях:', error)
+                console.error('Ошибка при получении данных для первичной формы:', error)
             }
         }
 
+        const fetchTeachers = async () => {
+            try {
+                const response = await getAllTeachers()
+                console.log(response.data)
+                const teacherOptions = response.data.map(item => ({
+                    value: item.full_name,
+                    label: item.full_name,
+                    id: item.id,
+                    exp_total: item.exp_total,
+                    position: item.position,
+                    workplace: item.workplace,
+                }))
+                setTeachersOptions(teacherOptions)
+
+            } catch (error) {
+                console.error('Ошибка при получении данных о преподавателях:', error)
+            }
+        }
+
+        fetchTeachers()
         fetchPrimaryFormData()
     }, []) // Пустой массив зависимостей
 
@@ -127,8 +159,12 @@ const PrimaryForm = ({ userID }) => {
     }, [formValues.program_type_id])
 
     const handleTeacherChange = (index, teacherData) => {
+        const cleanedData = {
+            ...teacherData,
+            exp_total: teacherData.exp_total ? validateNumberInput(teacherData.exp_total) : '',
+        }
         const updatedTeachers = [...teachers]
-        updatedTeachers[index] = teacherData
+        updatedTeachers[index] = cleanedData
         setTeachers(updatedTeachers)
     }
 
@@ -136,7 +172,7 @@ const PrimaryForm = ({ userID }) => {
         if (teachers.length < 6) {
             setTeachers([
                 ...teachers,
-                { position: '', f_name: '', m_name: '', l_name: '', workExperience: '', workplace: '' },
+                { position: '', full_name: '', exp_total: '', workplace: '' },
             ])
         }
     }
@@ -163,9 +199,17 @@ const PrimaryForm = ({ userID }) => {
     }
 
     const handleModuleChange = (index, updatedModule) => {
+        const cleanedData = {
+            ...updatedModule,
+            h_overall: updatedModule.h_overall ? validateNumberInput(updatedModule.h_overall) : '',
+        }
         const newModules = [...modules]
-        newModules[index] = updatedModule
+        newModules[index] = cleanedData
         setModules(newModules)
+    }
+    const validateNumberInput = (value) => {
+        // Удаляем все не-цифровые символы и возвращаем результат
+        return value.replace(/[^\d]/g, '')
     }
 
     const handleAddModule = () => {
@@ -176,16 +220,14 @@ const PrimaryForm = ({ userID }) => {
         setModules(modules.filter((_, i) => i !== index))
     }
 
-    const handleCoordinatorChange = (coordinatorData) => {
-        setCoordinator(coordinatorData)
-    }
-
     const handleChange = (e) => {
         if (e && e.value) {
-            console.log(e)
             setFormValues({ ...formValues, [e.name]: e.value })
         } else {
-            setFormValues({ ...formValues, [e.target.name]: e.target.value })
+            if (numberFields.includes(e.target.name))
+                setFormValues({ ...formValues, [e.target.name]: validateNumberInput(e.target.value) })
+            else
+                setFormValues({ ...formValues, [e.target.name]: e.target.value })
         }
     }
 
@@ -206,31 +248,60 @@ const PrimaryForm = ({ userID }) => {
         if (!formValues.education_cost.trim()) errors.education_cost = 'Укажите стоимость обучения'
         if (!formValues.ksu_department_id) errors.ksu_department_id = 'Выберите структурное подразделение'
         if (!formValues.type_graduation_doc_id) errors.type_graduation_doc_id = 'Выберите документ по окончании'
+
+        // Проверка модулей
+        const moduleNames = new Map() // Для проверки дубликатов названий
+
         modules.forEach((module, index) => {
             const currentModuleErrors = []
 
-            if (!module.name?.trim()) {
+            // Проверка названия модуля
+            if (!module.name?.trim())
                 currentModuleErrors.push("Не указано название модуля")
+            else {
+                // Проверка на дубликаты названий
+                const normalizedName = module.name.trim().toLowerCase()
+                if (moduleNames.has(normalizedName))
+                    moduleNames.set(normalizedName, [...moduleNames.get(normalizedName), index])
+                else
+                    moduleNames.set(normalizedName, [index])
+
             }
 
-            // Приводим к единой структуре
+            if (!module.h_overall?.trim())
+                currentModuleErrors.push("Не указаны часы модуля")
+
+            // Добавляем ошибки модуля
             if (currentModuleErrors.length > 0) {
-                moduleErrors[index] = {
-                    module: currentModuleErrors,
-                    submodules: {} // даже если нет подмодулей — для универсального отображения
-                }
+                moduleErrors[index] = {}
+                if (currentModuleErrors.length > 0)
+                    moduleErrors[index].module = currentModuleErrors
             }
         })
 
+        // Добавляем ошибки дубликатов названий модулей
+        moduleNames.forEach((indices, name) => {
+            if (indices.length > 1) {
+                if (!moduleErrors.duplicates) moduleErrors.duplicates = []
+                moduleErrors.duplicates.push(
+                    `Название модуля "${name}" повторяется в модулях: ${indices.map(i => i + 1).join(', ')}`
+                )
+            }
+        })
+
+        // Проверка количества модулей
         if (modules.length < 1)
             moduleErrors.count = ['Добавьте хотя бы один модуль']
 
+
+        // Проверка аспектов
         const requiredTypes = ['know', 'can', 'own']
         const typeCounters = { know: 0, can: 0, own: 0 }
         const typeTranslations = { know: 'Знать', can: 'Уметь', own: 'Владеть' }
         const foundTypes = new Set()
-
         const missingNames = []
+        const aspectNamesMap = new Map()
+
         aspects.forEach((aspect) => {
             typeCounters[aspect.type] += 1
             foundTypes.add(aspect.type)
@@ -239,26 +310,76 @@ const PrimaryForm = ({ userID }) => {
                 const num = typeCounters[aspect.type]
                 const typeText = typeTranslations[aspect.type] || aspect.type
                 missingNames.push(`Аспект №${num} типа "${typeText}": Не указано наименование`)
+            } else {
+                const normalizedName = aspect.name.trim().toLowerCase()
+                if (!aspectNamesMap.has(normalizedName))
+                    aspectNamesMap.set(normalizedName, [aspect.type])
+                else {
+                    const existingTypes = aspectNamesMap.get(normalizedName)
+                    aspectNamesMap.set(normalizedName, [...existingTypes, aspect.type])
+                }
             }
-            if (missingNames.length > 0)
-                aspectErrors.missingNames = missingNames
         })
 
-        const types = []
+        // Формируем ошибки для дубликатов аспектов
+        const duplicateErrors = []
+        aspectNamesMap.forEach((types, name) => {
+            if (types.length > 1) {
+                const typeTexts = types.map(t => typeTranslations[t] || t)
+                duplicateErrors.push(
+                    `Наименование аспекта "${name}" повторяется в типах: ${typeTexts.join(', ')}`
+                )
+            }
+        })
+
+        if (missingNames.length > 0)
+            aspectErrors.missingNames = missingNames
+
+        if (duplicateErrors.length > 0)
+            aspectErrors.duplicates = duplicateErrors
+
+        // Проверка обязательных типов аспектов
+        const missingTypeErrors = []
         requiredTypes.forEach((type) => {
             if (!foundTypes.has(type)) {
                 const typeText = typeTranslations[type] || type
-                types.push(`Не указан хотя бы один аспект типа "${typeText}"`)
+                missingTypeErrors.push(`Не указан хотя бы один аспект типа "${typeText}"`)
             }
-            if (types.length > 0)
-                aspectErrors.type = types
         })
+
+        if (missingTypeErrors.length > 0)
+            aspectErrors.type = missingTypeErrors
+
+        // Проверка преподавателей
+
+        const teacherNames = new Map() // Для отслеживания дубликатов
+
+        // Для приведения имени преподавателя из "... аЛЕКсандР ..." к "... Александр ..."
+        const normalizeName = (name) => {
+            if (!name) return ''
+
+            return name.trim()
+                .toLowerCase()
+                .split(' ')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')
+        }
 
         teachers.forEach((teacher, index) => {
             const currentTeacherErrors = []
+            const normalizedName = normalizeName(teacher?.full_name)
 
-            if (!teacher.full_name?.trim()) currentTeacherErrors.push("Не выбран Преподаватель")
-            else {
+            // Базовые проверки
+            if (!teacher.full_name?.trim()) {
+                currentTeacherErrors.push("Не выбран преподаватель")
+            } else {
+                // Проверка на дубликаты
+                if (teacherNames.has(normalizedName)) {
+                    teacherNames.set(normalizedName, [...teacherNames.get(normalizedName), index])
+                } else {
+                    teacherNames.set(normalizedName, [index])
+                }
+
                 if (!teacher.exp_total?.trim()) currentTeacherErrors.push("Не указан опыт работы")
                 if (!teacher.workplace?.trim()) currentTeacherErrors.push("Не указано место работы")
                 if (!teacher.position?.trim()) currentTeacherErrors.push("Не указана должность")
@@ -269,11 +390,21 @@ const PrimaryForm = ({ userID }) => {
                     teacher: currentTeacherErrors,
                 }
             }
-
         })
 
-        if (teachers.length < 1)
+        // Добавляем ошибки дубликатов
+        teacherNames.forEach((indices, name) => {
+            if (indices.length > 1) {
+                if (!teacherErrors.duplicates) teacherErrors.duplicates = []
+                teacherErrors.duplicates.push(
+                    `Преподаватель "${name}" повторяется в позициях: ${indices.map(i => i + 1).join(', ')}`
+                )
+            }
+        })
+
+        if (teachers.length < 1) {
             teacherErrors.count = ['Добавьте хотя бы одного преподавателя']
+        }
 
         setTeacherValidationErrors(teacherErrors)
         setAspectValidationErrors(aspectErrors)
@@ -281,6 +412,55 @@ const PrimaryForm = ({ userID }) => {
         setValidationErrors(errors)
         return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0 && Object.keys(aspectErrors).length === 0 && Object.keys(teacherErrors).length === 0
     }
+
+    const validateNewCoordinator = () => {
+        const errors = {}
+        if (!newCoordinator.full_name.trim()) errors.full_name = 'Введите ФИО координатора'
+        if (!newCoordinator.phone.trim()) errors.phone = 'Укажите номер телефона'
+        if (!newCoordinator.email.trim()) errors.email = 'Укажите EMail'
+        if (!newCoordinator.address.trim()) errors.address = 'Укажите адрес'
+        setCoordinatorModalErrors(errors)
+        return Object.keys(errors).length === 0
+    }
+
+    const handleCoordinatorSelectChange = (index, selected) => {
+        if (selected.value === '__add__') return
+
+        const updatedCoordinator = [...coordinator]
+        updatedCoordinator[index] = {
+            ...updatedCoordinator[index],
+            full_name: selected.value,
+            phone: selected.phone || updatedCoordinator[index]?.phone || '',
+            email: selected.email || updatedCoordinator[index]?.email || '',
+            address: selected.address || updatedCoordinator[index]?.address || ''
+        }
+        setCoordinator(updatedCoordinator)
+    }
+
+    const handleCoordinatorChange = (coordinatorData) => {
+        setCoordinator(coordinatorData)
+    }
+
+    const handleAddNewCoordinator = () => {
+        if (!validateNewCoordinator()) return
+
+        const newOption = {
+            value: newCoordinator.full_name,
+            label: newCoordinator.full_name,
+            phone: newCoordinator.phone,
+            email: newCoordinator.email,
+            address: newCoordinator.address
+        }
+
+        setCoordinatorOptions(prev => [...prev, newOption])
+        setCoordinator([{ ...newCoordinator }]) // Устанавливаем нового координатора
+        setNewCoordinator({ full_name: '', phone: '', email: '', address: '' })
+        setShowAddCoordinatorModal(false)
+    }
+    const handleCoordinatorSelectSpecial = () => {
+        setShowAddCoordinatorModal(true)
+    }
+
 
     const validateNewTeacher = () => {
         const errors = {}
@@ -298,7 +478,6 @@ const PrimaryForm = ({ userID }) => {
         }
 
         const updatedTeachers = [...teachers]
-        console.log(updatedTeachers[index])
         updatedTeachers[index] = {
             full_name: selected.value,
             position: selected.position || '',
@@ -356,7 +535,7 @@ const PrimaryForm = ({ userID }) => {
         program_hours: 'Общее количество часов',
         lesson_shedule: 'Форма обучения',
         study_period: 'Срок обучения',
-        education_cost: 'Стоимость обучения',
+        education_cost: 'Стоимость обучения (в рублях)',
         ksu_department_id: 'Структурное подразделение КГУ',
         type_graduation_doc_id: 'Документ по окончании',
     }
@@ -543,6 +722,10 @@ const PrimaryForm = ({ userID }) => {
                         <CoordinatorForm
                             coordinator={coordinator}
                             onCoordinatorChange={handleCoordinatorChange}
+                            coordinatorOptions={coordinatorOptions}
+                            handleCoordinatorSelectChange={handleCoordinatorSelectChange}
+                            onSelectSpecialValue={handleCoordinatorSelectSpecial}
+                            setCoordinator={setCoordinator}
                         />
                     </Card.Body>
                 </Card>
@@ -551,6 +734,44 @@ const PrimaryForm = ({ userID }) => {
                     Отправить
                 </Button>
             </Form>
+
+            <Modal show={showAddCoordinatorModal} onHide={() => setShowAddCoordinatorModal(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Добавить координатора</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    <InputField
+                        label="ФИО"
+                        value={newCoordinator?.full_name}
+                        onChange={(e) => setNewCoordinator(prev => ({ ...prev, full_name: e.target.value }))}
+                        error={coordinatorModalErrors?.full_name}
+                    />
+                    <InputField
+                        label="Телефон"
+                        name='modal-phone'
+                        value={newCoordinator?.phone}
+                        onChange={(e) => setNewCoordinator(prev => ({ ...prev, phone: e.target.value }))}
+                        isPhoneNumber
+                        error={coordinatorModalErrors?.phone}
+                    />
+                    <InputField
+                        label="EMail"
+                        value={newCoordinator?.email}
+                        onChange={(e) => setNewCoordinator(prev => ({ ...prev, email: e.target.value }))}
+                        error={coordinatorModalErrors?.email}
+                    />
+                    <InputField
+                        label="Адрес"
+                        value={newCoordinator?.address}
+                        onChange={(e) => setNewCoordinator(prev => ({ ...prev, address: e.target.value }))}
+                        error={coordinatorModalErrors?.address}
+                    />
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowAddCoordinatorModal(false)}>Отмена</Button>
+                    <Button variant="primary" onClick={handleAddNewCoordinator}>Сохранить</Button>
+                </Modal.Footer>
+            </Modal>
 
             <Modal show={showAddTeacherModal} onHide={() => setShowAddTeacherModal(false)} centered>
                 <Modal.Header closeButton>

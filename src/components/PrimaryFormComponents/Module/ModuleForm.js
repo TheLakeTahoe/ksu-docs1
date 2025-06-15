@@ -9,6 +9,10 @@ const ModuleForm = ({ index, moduleData, onChange, onRemove, isEditable, isForEd
         { label: 'Экзамен', value: 'Экзамен' },
         { label: 'Отсутствует', value: 'Отсутствует' }
     ]
+    const validateNumberInput = (value) => {
+        // Удаляем все не-цифровые символы и возвращаем результат
+        return value.replace(/[^\d]/g, '')
+    }
     let content
 
     if (isForEducationalAndThematicPlan)
@@ -93,7 +97,7 @@ const ModuleForm = ({ index, moduleData, onChange, onRemove, isEditable, isForEd
                 </Row>
                 <Row>
                     <>
-                        <h6 className="mt-4">Подмодули</h6>
+                        {moduleData?.submodules?.length > 0 && (<h6 className="mt-4">Подмодули</h6>)}
                         {moduleData.submodules?.map((sub, subIndex) => (
                             <SubmoduleForm
                                 key={subIndex}
@@ -101,8 +105,15 @@ const ModuleForm = ({ index, moduleData, onChange, onRemove, isEditable, isForEd
                                 submodule={sub}
                                 isEditable={isEditable}
                                 onChange={(updatedSub) => {
+                                    const cleanedData = {
+                                        ...updatedSub,
+                                        h_lk: updatedSub.h_lk ? validateNumberInput(updatedSub.h_lk) : '',
+                                        h_lb: updatedSub.h_lb ? validateNumberInput(updatedSub.h_lb) : '',
+                                        h_pr: updatedSub.h_pr ? validateNumberInput(updatedSub.h_pr) : '',
+                                        h_sr: updatedSub.h_sr ? validateNumberInput(updatedSub.h_sr) : ''
+                                    }
                                     const updatedSubmodules = [...moduleData.submodules];
-                                    updatedSubmodules[subIndex] = updatedSub;
+                                    updatedSubmodules[subIndex] = cleanedData;
                                     if (
                                         updatedSubmodules[subIndex].h_lk ||
                                         updatedSubmodules[subIndex].h_lb ||
@@ -124,34 +135,35 @@ const ModuleForm = ({ index, moduleData, onChange, onRemove, isEditable, isForEd
                                 controlFormOptions={controlFormOptions}
                             />
                         ))}
-                        <Card
-                            className="d-flex align-items-center justify-content-center"
-                            style={{
-                                width: '100%',
-                                minHeight: '30px',
-                                border: '2px dashed #ccc',
-                                cursor: 'pointer',
-                            }}
-                            onClick={() => {
-                                const newSubmodules = moduleData.submodules ? [...moduleData.submodules] : [];
-                                console.log(newSubmodules)
-                                newSubmodules.push({
-                                    name: '',
-                                    h_overall: '',
-                                    h_lk: '',
-                                    h_lb: '',
-                                    h_pr: '',
-                                    h_sr: '',
-                                    control_form: '',
-                                    parentName: moduleData.name || `Модуль ${index}`
-                                });
-                                onChange({ ...moduleData, submodules: newSubmodules });
-                            }}
-                        >
-                            <Card.Body className="d-flex align-items-center justify-content-center">
-                                <h5>+ Добавить подмодуль</h5>
-                            </Card.Body>
-                        </Card>
+                        {isEditable && (
+                            <Card
+                                className="d-flex align-items-center justify-content-center"
+                                style={{
+                                    width: '100%',
+                                    minHeight: '30px',
+                                    border: '2px dashed #ccc',
+                                    cursor: 'pointer',
+                                }}
+                                onClick={() => {
+                                    const newSubmodules = moduleData.submodules ? [...moduleData.submodules] : [];
+                                    newSubmodules.push({
+                                        name: '',
+                                        h_overall: '',
+                                        h_lk: '',
+                                        h_lb: '',
+                                        h_pr: '',
+                                        h_sr: '',
+                                        control_form: '',
+                                        parentName: moduleData.name || `Модуль ${index}`
+                                    });
+                                    onChange({ ...moduleData, submodules: newSubmodules });
+                                }}
+                            >
+                                <Card.Body className="d-flex align-items-center justify-content-center">
+                                    <h5>+ Добавить подмодуль</h5>
+                                </Card.Body>
+                            </Card>
+                        )}
                     </>
                 </Row>
             </>)

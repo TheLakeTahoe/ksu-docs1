@@ -24,12 +24,15 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
         { label: 'Заочная', value: 'Заочная' },
     ]
 
+    //#region FillingAndValidating
     useEffect(() => {
         if (commonData && Object.keys(commonData?.aspects).length > 0)
             setAspects(commonData?.aspects || [])
         if (commonData && Object.keys(commonData?.modules).length > 0)
             setModules(commonData?.modules || [])
     }, [commonData])
+
+    console.log(documentsData)
 
     const flattenErrors = (errors) => {
         const result = {}
@@ -53,6 +56,198 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
         }
     }, [commonData?.errors])
 
+    const validateForm = () => {
+        const errors = {}
+        const moduleErrors = {}
+        const aspectErrors = {}
+
+        // Проверка основных полей программы
+        if (!commonData?.program?.program_goal?.trim())
+            errors.program_goal = "Поле не заполнено"
+
+        if (!commonData?.program?.education_form)
+            errors.education_form = "Поле не заполнено"
+
+        if (!commonData?.program?.standart_compliance?.trim())
+            errors.standart_compliance = "Поле не заполнено"
+
+
+        // Проверка модулей
+        const moduleNames = new Map() // Для проверки дубликатов названий
+
+        modules.forEach((module, index) => {
+            const currentModuleErrors = []
+            const currentSubModuleErrors = {}
+
+            // Проверка названия модуля
+            if (!module.name?.trim())
+                currentModuleErrors.push("Не указано название модуля")
+            else {
+                // Проверка на дубликаты названий
+                const normalizedName = module.name.trim().toLowerCase()
+                if (moduleNames.has(normalizedName))
+                    moduleNames.set(normalizedName, [...moduleNames.get(normalizedName), index])
+                else
+                    moduleNames.set(normalizedName, [index])
+
+            }
+
+            // Проверка часов
+            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr
+            if (!hasHours)
+                currentModuleErrors.push("Не указаны часы ни в одном из полей")
+
+
+            // Проверка формы контроля
+            if (!module.control_form?.trim())
+                currentModuleErrors.push("Не указана форма контроля")
+
+            // Проверка подмодулей
+            if (Array.isArray(module.submodules)) {
+                module.submodules.forEach((submodule, subIndex) => {
+                    const subErrors = []
+
+                    if (!submodule.name?.trim())
+                        subErrors.push("Не указано название подмодуля")
+
+                    const hasSubHours = submodule.h_lk || submodule.h_lb || submodule.h_pr || submodule.h_sr
+                    if (!hasSubHours)
+                        subErrors.push("Не указаны часы ни в одном из полей")
+
+                    if (!submodule.control_form?.trim())
+                        subErrors.push("Не указана форма контроля")
+
+                    if (subErrors.length > 0)
+                        currentSubModuleErrors[subIndex] = subErrors
+
+                })
+            }
+
+            // Проверка суммы часов подмодулей
+            if (Array.isArray(module.submodules) && module.submodules.length > 0) {
+                // Вычисляем сумму часов всех подмодулей
+                const submodulesTotalHours = module.submodules.reduce((total, submodule) => {
+                    return total +
+                        (parseFloat(submodule.h_lk) || 0) +
+                        (parseFloat(submodule.h_lb) || 0) +
+                        (parseFloat(submodule.h_pr) || 0) +
+                        (parseFloat(submodule.h_sr) || 0)
+                }, 0)
+
+                // Вычисляем сумму часов родительского модуля
+                const moduleTotalHours =
+                    (parseFloat(module.h_lk) || 0) +
+                    (parseFloat(module.h_lb) || 0) +
+                    (parseFloat(module.h_pr) || 0) +
+                    (parseFloat(module.h_sr) || 0)
+
+                // Сравниваем с допуском 0.1 (из-за возможных ошибок округления)
+                if ((submodulesTotalHours - moduleTotalHours) !== 0) {
+                    currentModuleErrors.push(
+                        `Сумма часов подмодулей: ${submodulesTotalHours} не соответствует общему количеству часов модуля: ${moduleTotalHours}`
+                    )
+                }
+            }
+
+            // Добавляем ошибки модуля
+            if (currentModuleErrors.length > 0 || Object.keys(currentSubModuleErrors).length > 0) {
+                moduleErrors[index] = {}
+                if (currentModuleErrors.length > 0)
+                    moduleErrors[index].module = currentModuleErrors
+
+                if (Object.keys(currentSubModuleErrors).length > 0)
+                    moduleErrors[index].submodules = currentSubModuleErrors
+
+            }
+        })
+
+        // Добавляем ошибки дубликатов названий модулей
+        moduleNames.forEach((indices, name) => {
+            if (indices.length > 1) {
+                if (!moduleErrors.duplicates) moduleErrors.duplicates = []
+                moduleErrors.duplicates.push(
+                    `Название модуля "${name}" повторяется в модулях: ${indices.map(i => i + 1).join(', ')}`
+                )
+            }
+        })
+
+        // Проверка количества модулей
+        if (modules.length < 1)
+            moduleErrors.count = ['Добавьте хотя бы один модуль']
+
+
+        // Проверка аспектов
+        const requiredTypes = ['know', 'can', 'own']
+        const typeCounters = { know: 0, can: 0, own: 0 }
+        const typeTranslations = { know: 'Знать', can: 'Уметь', own: 'Владеть' }
+        const foundTypes = new Set()
+        const missingNames = []
+        const aspectNamesMap = new Map()
+
+        aspects.forEach((aspect) => {
+            typeCounters[aspect.type] += 1
+            foundTypes.add(aspect.type)
+
+            if (!aspect.name?.trim()) {
+                const num = typeCounters[aspect.type]
+                const typeText = typeTranslations[aspect.type] || aspect.type
+                missingNames.push(`Аспект №${num} типа "${typeText}": Не указано наименование`)
+            } else {
+                const normalizedName = aspect.name.trim().toLowerCase()
+                if (!aspectNamesMap.has(normalizedName))
+                    aspectNamesMap.set(normalizedName, [aspect.type])
+                else {
+                    const existingTypes = aspectNamesMap.get(normalizedName)
+                    aspectNamesMap.set(normalizedName, [...existingTypes, aspect.type])
+                }
+            }
+        })
+
+        // Формируем ошибки для дубликатов аспектов
+        const duplicateErrors = []
+        aspectNamesMap.forEach((types, name) => {
+            if (types.length > 1) {
+                const typeTexts = types.map(t => typeTranslations[t] || t)
+                duplicateErrors.push(
+                    `Наименование аспекта "${name}" повторяется в типах: ${typeTexts.join(', ')}`
+                )
+            }
+        })
+
+        if (missingNames.length > 0)
+            aspectErrors.missingNames = missingNames
+
+        if (duplicateErrors.length > 0)
+            aspectErrors.duplicates = duplicateErrors
+
+        // Проверка обязательных типов аспектов
+        const missingTypeErrors = []
+        requiredTypes.forEach((type) => {
+            if (!foundTypes.has(type)) {
+                const typeText = typeTranslations[type] || type
+                missingTypeErrors.push(`Не указан хотя бы один аспект типа "${typeText}"`)
+            }
+        })
+
+        if (missingTypeErrors.length > 0)
+            aspectErrors.type = missingTypeErrors
+
+        // Установка ошибок
+        setValidationErrors(errors)
+        setModuleValidationErrors(moduleErrors)
+        setAspectValidationErrors(aspectErrors)
+
+        // Возвращаем результат валидации
+        return (
+            Object.keys(errors).length === 0 &&
+            Object.keys(moduleErrors).length === 0 &&
+            Object.keys(aspectErrors).length === 0
+        )
+    }
+
+    //#endregion
+
+    //#region DocxTemplater
     const handleViewDoc = async () => {
         try {
             const response = await exportEducationAndThematicPlan({ commonData })
@@ -89,7 +284,9 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
             console.error("Ошибка скачивания файла:", error)
         }
     }
+    //#endregion
 
+    //#region ASPECTS
     const addAspect = (type) => {
         if (!(aspects.filter((a) => a.type === type).length < 3)) {
             return
@@ -129,8 +326,9 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
             }
         }))
     }
+    //#endregion
 
-
+    //#region MODULES
     const addModule = () => {
         const newModule = {
             name: '',
@@ -149,7 +347,9 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
             commonData: {
                 ...prev.commonData,
                 modules: updatedModules
-            }
+            },
+            EEP: false,
+            IAS: false
         }))
     }
 
@@ -161,25 +361,37 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
             commonData: {
                 ...prev.commonData,
                 modules: updatedModules
-            }
+            },
+            EEP: false,
+            IAS: false
         }))
     }
 
     const handleModuleChange = (index, newData) => {
-        const updatedModules = modules.map((module, i) => i === index ? newData : module)
-
-        if (
-            updatedModules[index].h_lk ||
-            updatedModules[index].h_lb ||
-            updatedModules[index].h_pr ||
-            updatedModules[index].h_sr
-        ) {
-            updatedModules[index].h_overall =
-                parseFloat(updatedModules[index].h_lk || 0) +
-                parseFloat(updatedModules[index].h_lb || 0) +
-                parseFloat(updatedModules[index].h_pr || 0) +
-                parseFloat(updatedModules[index].h_sr || 0)
+        const cleanedData = {
+            ...newData,
+            h_lk: newData.h_lk ? validateNumberInput(newData.h_lk) : '',
+            h_lb: newData.h_lb ? validateNumberInput(newData.h_lb) : '',
+            h_pr: newData.h_pr ? validateNumberInput(newData.h_pr) : '',
+            h_sr: newData.h_sr ? validateNumberInput(newData.h_sr) : ''
         }
+
+        const updatedModules = modules.map((module, i) => i === index ? cleanedData : module)
+
+        // Проверяем, все ли поля часов пустые
+        const allHoursEmpty =
+            !cleanedData.h_lk &&
+            !cleanedData.h_lb &&
+            !cleanedData.h_pr &&
+            !cleanedData.h_sr
+
+        // Обновляем общее количество часов
+        updatedModules[index].h_overall = allHoursEmpty
+            ? ''
+            : parseFloat(cleanedData.h_lk || 0) +
+            parseFloat(cleanedData.h_lb || 0) +
+            parseFloat(cleanedData.h_pr || 0) +
+            parseFloat(cleanedData.h_sr || 0)
 
         setDocumentsData(prev => ({
             ...prev,
@@ -190,6 +402,13 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
         }))
     }
 
+    const validateNumberInput = (value) => {
+        // Удаляем все не-цифровые символы и возвращаем результат
+        return value.replace(/[^\d]/g, '')
+    }
+    //#endregion
+
+    //#region Input
     const handleSelectChange = (val, field) => {
         handleInputChange({ target: { value: val.value, name: field } })
     }
@@ -219,115 +438,9 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
         })
     }
 
-    const validateForm = () => {
-        const errors = {}
-        const moduleErrors = {}
-        const aspectErrors = {}
+    //#endregion
 
-        if (!commonData?.program?.program_goal?.trim()) {
-            errors["program_goal"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.program?.education_form) {
-            errors["education_form"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.program?.standart_compliance?.trim()) {
-            errors["standart_compliance"] = "Поле не заполнено"
-        }
-
-        modules.forEach((module, index) => {
-            const currentModuleErrors = []
-            const currentSubModuleErrors = {}
-
-            if (!module.name?.trim()) {
-                currentModuleErrors.push("Не указано название модуля")
-            }
-
-            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr
-
-            if (!hasHours) {
-                currentModuleErrors.push("Не указаны часы ни в одном из полей")
-            }
-
-            if (!module.control_form?.trim()) {
-                currentModuleErrors.push("Не указана форма контроля")
-            }
-
-            if (Array.isArray(module.submodules)) {
-                module.submodules.forEach((submodule, subIndex) => {
-                    const subErrors = []
-
-                    if (!submodule.name?.trim()) {
-                        subErrors.push("Не указано название подмодуля")
-                    }
-
-                    const hasHours = submodule.h_lk || submodule.h_lb || submodule.h_pr || submodule.h_sr
-
-                    if (!hasHours) {
-                        subErrors.push("Не указаны часы ни в одном из полей")
-                    }
-
-                    if (!submodule.control_form?.trim()) {
-                        subErrors.push("Не указана форма контроля")
-                    }
-
-                    if (subErrors.length > 0) {
-                        currentSubModuleErrors[subIndex] = subErrors
-                    }
-                })
-            }
-
-            if (currentModuleErrors.length > 0 || Object.keys(currentSubModuleErrors).length > 0) {
-                moduleErrors[index] = {}
-                if (currentModuleErrors.length > 0) {
-                    moduleErrors[index].module = currentModuleErrors
-                }
-                if (Object.keys(currentSubModuleErrors).length > 0) {
-                    moduleErrors[index].submodules = currentSubModuleErrors
-                }
-            }
-        })
-
-        if (modules.length < 1)
-            moduleErrors.count = ['Добавьте хотя бы один модуль']
-
-        const requiredTypes = ['know', 'can', 'own']
-        const typeCounters = { know: 0, can: 0, own: 0 }
-        const typeTranslations = { know: 'Знать', can: 'Уметь', own: 'Владеть' }
-        const foundTypes = new Set()
-
-        const missingNames = []
-        aspects.forEach((aspect) => {
-            typeCounters[aspect.type] += 1
-            foundTypes.add(aspect.type)
-
-            if (!aspect.name?.trim()) {
-                const num = typeCounters[aspect.type]
-                const typeText = typeTranslations[aspect.type] || aspect.type
-                missingNames.push(`Аспект №${num} типа "${typeText}": Не указано наименование`)
-            }
-            if (missingNames.length > 0)
-                aspectErrors.missingNames = missingNames
-        })
-
-        const types = []
-        requiredTypes.forEach((type) => {
-            if (!foundTypes.has(type)) {
-                const typeText = typeTranslations[type] || type
-                types.push(`Не указан хотя бы один аспект типа "${typeText}"`)
-            }
-            if (types.length > 0)
-                aspectErrors.type = types
-        })
-
-        setValidationErrors(errors)
-        setModuleValidationErrors(moduleErrors)
-        setAspectValidationErrors(aspectErrors)
-        return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0 && Object.keys(aspectErrors).length === 0
-    }
-
-
+    //#region Submit
     const sendThisDocument = () => {
         const dataToSend = {
             ...documentsData,
@@ -344,6 +457,7 @@ const EducationalAndThematicPlanForm = ({ userData, requestID, documentsData, se
         sendThisDocument()
         onSave()
     }
+    //#endregion
 
     return (
         <Container className='mt-4'>

@@ -3,6 +3,27 @@ import { Row, Col, Card, Container, Alert } from 'react-bootstrap';
 import AspectField from './AspectField';
 
 const AspectGroup = ({ aspects, onAspectChange, onAddAspect, onRemoveAspect, isEditable, aspectErrors }) => {
+
+    const getAlertConfig = (key) => {
+        switch (key) {
+            case 'type':
+                return {
+                    title: 'Отсутствуют аспекты:',
+                    variant: 'danger'
+                };
+            case 'missingNames':
+                return {
+                    title: 'Не заполнены наименования аспектов:',
+                    variant: 'danger'
+                };
+            default:
+                return {
+                    title: 'Обнаружены дубликаты аспектов:',
+                    variant: 'warning'
+                };
+        }
+    };
+
     // Фильтрация аспектов по типу
     const filterAspectsByType = (type) => aspects.filter((aspect) => aspect.type === type);
 
@@ -42,29 +63,23 @@ const AspectGroup = ({ aspects, onAspectChange, onAddAspect, onRemoveAspect, isE
 
     return (
         <Container>
-            {aspectErrors && Object.entries(aspectErrors).map(([key, errors]) => (
-                <Alert key={key} variant="danger">
-                    {(key !== 'type') ? (
+            {aspectErrors && Object.entries(aspectErrors).map(([key, errors]) => {
+
+                const { title, variant } = getAlertConfig(key)
+
+                return (
+                    <Alert key={key} variant={variant}>
                         <>
-                            <strong>Не заполнены данные аспектов:</strong>
+                            <strong>{title}</strong>
                             <ul className="mb-0">
                                 {errors.map((err, i) => (
                                     <li key={i}>{err}</li>
                                 ))}
                             </ul>
                         </>
-                    ) : (
-                        <>
-                            <strong>Отсутствуют аспекты:</strong>
-                            <ul className="mb-0">
-                                {errors.map((err, i) => (
-                                    <li key={i}>{err}</li>
-                                ))}
-                            </ul>
-                        </>
-                    )}
-                </Alert>
-            ))}
+                    </Alert>
+                )
+            })}
             <Row>
                 {renderColumn(filterAspectsByType('know'), 'Знать', 'know')}
                 {renderColumn(filterAspectsByType('can'), 'Уметь', 'can')}

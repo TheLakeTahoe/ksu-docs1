@@ -29,12 +29,14 @@ const ReviwerTools = ({ userData, requestID, isAnnotation, dataToSend }) => {
     const commonDataFieldsName = useContext(DocumentsContext)
 
     const fieldsByDoc = {
-        ANN: commonDataFieldsName.commonDataFieldsName[1],
-        EDP: commonDataFieldsName.commonDataFieldsName[2],
-        ETP: commonDataFieldsName.commonDataFieldsName[3],
-        EEP: commonDataFieldsName.commonDataFieldsName[4], // нет полей для проверки
-        IAS: commonDataFieldsName.commonDataFieldsName[5], // нет полей для проверки
-    }
+        ANN: commonDataFieldsName?.commonDataFieldsName?.[1] || [],
+        EDP: commonDataFieldsName?.commonDataFieldsName?.[2] || [],
+        ETP: commonDataFieldsName?.commonDataFieldsName?.[3] || [],
+        EEP: commonDataFieldsName?.commonDataFieldsName?.[4] || [],
+        IAS: commonDataFieldsName?.commonDataFieldsName?.[5] || [],
+    };
+
+    console.log('fieldsByDoc:', fieldsByDoc); // Для отладки
 
     const Reject = () => {
         if (dataToSend) {
@@ -47,25 +49,29 @@ const ReviwerTools = ({ userData, requestID, isAnnotation, dataToSend }) => {
     }
 
     const checkAndUpdateFlags = (data) => {
-        if (!data || !data.commonData) return data
+        if (!data || !data.commonData) return data;
 
         // Создаем копию данных, чтобы не мутировать пропсы
         const newData = { ...data }
+        console.log('Original data:', newData)
 
-        // Для каждого документа проверяем ошибки и ставим флаг false, если ошибки есть
-        ['ANN', 'EDP', 'EEP', 'ETP', 'IAS'].forEach((docKey) => {
-            const fieldsToCheck = fieldsByDoc[docKey] || []
+        // Для каждого документа проверяем ошибки
+        Object.keys(fieldsByDoc).forEach((docKey) => {
+            const fieldsToCheck = fieldsByDoc[docKey] || [];
             if (fieldsToCheck.length === 0) {
                 // Если полей нет, не меняем флаг
                 return
             }
-            const errors = newData.commonData.errors || {}
+
+            const errors = newData.commonData.errors || {};
             if (hasErrorsForFields(fieldsToCheck, errors)) {
-                newData[docKey] = false
+                newData[docKey] = false;
+                console.log(`Setting ${docKey} to false due to errors`);
             }
         })
 
-        return newData
+        console.log('Updated data:', newData);
+        return newData;
     }
 
     const Edit = () => {

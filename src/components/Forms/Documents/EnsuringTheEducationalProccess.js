@@ -18,11 +18,31 @@ const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData
   const commonData = documentsData.commonData
   const containerRef = useRef(null)
 
+
+  //#region FillingAndValidating
   useEffect(() => {
     if (commonData && Object.keys(commonData?.modules).length > 0)
       setModuleList(commonData?.modules || [])
   }, [commonData])
 
+  const validateModules = () => {
+    const errors = {}
+    moduleList.forEach((module, idx) => {
+      const moduleError = {}
+      if (!module?.ksu_data?.auditory) {
+        moduleError.auditory = 'Выберите учебную аудиторию'
+      }
+      if (Object.keys(moduleError).length > 0) {
+        errors[idx] = moduleError
+      }
+    })
+
+    setModuleErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+  //#endregion
+
+  //#region Input
   const handleChange = (index, value) => {
     const updatedModules = [...moduleList]
     updatedModules[index] = {
@@ -44,7 +64,9 @@ const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData
     }))
     onChange()
   }
+  //#endregion
 
+  //#region DocxTemplater
   const handleViewDoc = async () => {
     try {
       const response = await exportEnsuringTheEducationalProccess({ commonData })
@@ -81,23 +103,9 @@ const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData
       console.error("Ошибка скачивания файла:", error)
     }
   }
+  //#endregion
 
-  const validateModules = () => {
-    const errors = {}
-    moduleList.forEach((module, idx) => {
-      const moduleError = {}
-      if (!module?.ksu_data?.auditory) {
-        moduleError.auditory = 'Выберите учебную аудиторию'
-      }
-      if (Object.keys(moduleError).length > 0) {
-        errors[idx] = moduleError
-      }
-    })
-
-    setModuleErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
+  //#region Submit
   const sendThisDocument = () => {
     if (!validateModules())
       return
@@ -106,10 +114,11 @@ const EnsuringTheEducationalProccessForm = ({ requestID, onChange, documentsData
       EEP: true
     }
     setDocumentsData(dataToSend)
-    
+
     sendDocument(dataToSend, requestID)
     onSave()
   }
+  //#endregion
 
   return (
     <Container className='mt-4'>

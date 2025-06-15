@@ -32,6 +32,15 @@ export const getAllEducation = async () => {
     }
 }
 
+export const getAllTeachers = async () => {
+    try {
+        const response = await $host.get(`api/data/get_teachers`)
+        return response
+    } catch (error) {
+        console.error(error)
+    }
+}
+
 export const getPrimaryFormData = async (primary_form_id) => {
     try {
         const response = await $host.post(`api/data/get_primary_form_data`, { primary_form_id })

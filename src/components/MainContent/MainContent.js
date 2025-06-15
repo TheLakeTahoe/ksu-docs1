@@ -34,11 +34,12 @@ const MainContent = () => {
                 if (!account_id) return
                 const response = await getUserRequests(account_id)
                 const mainContentData = response.data.userrequests.map(item => ({
-                    id: item.id,
-                    title: item.program_name,
-                    date: item.date.split("T")[0],
+                    id:     item.id,
+                    title:  item.program_name,
+                    date:   item.date.split("T")[0],
                     status: item.status_name,
-                    desc: item.description,
+                    desc:   item.description,
+                    owner:  item.owner
                 }))
                 setTimeout(() => { // setTimeout используется для примера
                     setRequests(mainContentData)
@@ -110,12 +111,12 @@ const MainContent = () => {
                         {requests.map((request, index) => (
                             <ListGroupItem key={index} style={{ padding: '15px', border: '1px solid #ddd' }}>
                                 <Row>
-                                    <Col md={8} style={{ textAlign: 'left' }}>
+                                    <Col md={7} style={{ textAlign: 'left' }}>
                                             <strong>{request.title}</strong>
                                     </Col>
-                                    <Col md={4} className="d-flex justify-content-between" style={{ color: '#555', textAlign: 'left' }}>
-                                        <div>{request.date}</div>
-                                        <div style={{ color: '#1B9AE9' }}>{request.status}</div>
+                                    <Col md={5} className="d-flex justify-content-between" style={{ color: '#555', textAlign: 'left' }}>
+                                        <Col>{request.date}</Col>
+                                        <Col style={{ textAlign:'right', color: '#1B9AE9' }}>{request.status}</Col>
                                     </Col>
                                 </Row>
                                 <Row className='mt-2'>
@@ -214,7 +215,7 @@ const MainContent = () => {
                                 state: {
                                     requestID: selectedRequest?.id,
                                     isEditable: true,
-                                    isChecking: user?.role_id >= 3
+                                    isChecking: user?.role_id >= 3 && user.id !== selectedRequest.owner
                                 }
                             })}
                         >

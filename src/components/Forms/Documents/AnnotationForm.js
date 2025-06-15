@@ -22,12 +22,14 @@ const AnnotationForm = ({ userData, requestID, documentsData, setDocumentsData, 
     const [technologyValidationErrors, setTechnologyValidationErrors] = useState({})
     const commonData = documentsData.commonData
     const annotationData = documentsData.annotation
+    const numberInputs = ['commonData.hours.academic', 'commonData.hours.overall', 'commonData.lesson.duration', 'commonData.lesson.count']
     const controlFormOptions = [
         { label: 'Зачет', value: 'Зачет' },
         { label: 'Экзамен', value: 'Экзамен' },
         { label: 'Отсутствует', value: 'Отсутствует' }
     ]
 
+    //#region FillingAndValidating
     useEffect(() => {
         if (commonData && Object.keys(commonData?.aspects).length > 0)
             setAspects(commonData?.aspects || [])
@@ -65,145 +67,6 @@ const AnnotationForm = ({ userData, requestID, documentsData, setDocumentsData, 
             })
         }
     }, [annotationData?.errors, commonData?.errors])
-
-    const sendThisDocument = async () => {
-        const dataToSend = {
-            ...documentsData,
-            ANN: true
-        }
-        setDocumentsData(dataToSend)
-
-        sendDocument(dataToSend, requestID)
-    }
-
-    const handleTechnologyChange = (index, updatedTechnology) => {
-        const newTechnologies = [...technologies]
-        newTechnologies[index] = updatedTechnology
-        setTechnologies(newTechnologies)
-        setDocumentsData(prev => ({
-            ...prev,
-            annotation: {
-                ...prev.annotation,
-                technologies: newTechnologies
-            }
-        }))
-        onChange()
-    }
-
-    const handleAddTechnology = () => {
-        const newTechnologies = [...technologies, { name: '' }]
-        setTechnologies(newTechnologies)
-        setDocumentsData(prev => ({
-            ...prev,
-            annotation: {
-                ...prev.annotation,
-                technologies: newTechnologies
-            }
-        }))
-        onChange()
-    }
-
-    const handleRemoveTechnology = (index) => {
-        const newTechnologies = technologies.filter((_, i) => i !== index)
-        setTechnologies(newTechnologies)
-        setDocumentsData(prev => ({
-            ...prev,
-            annotation: {
-                ...prev.annotation,
-                technologies: newTechnologies
-            }
-        }))
-        onChange()
-    }
-
-    const handleViewDoc = async () => {
-        try {
-            const response = await exportAnnotation({ annotationData, commonData })
-            if (response.status !== 200) throw new Error("Ошибка при создании файла")
-
-            const blob = response.data
-            setShowModal(true)
-
-            setTimeout(() => {
-                if (containerRef.current) {
-                    containerRef.current.innerHTML = ""
-                    renderAsync(blob, containerRef.current)
-                }
-            }, 1000)
-        } catch (error) {
-            console.error("Ошибка просмотра документа:", error)
-        }
-    }
-
-    const handleDownload = async () => {
-        try {
-            const response = await exportAnnotation({ annotationData, commonData })
-            if (response.status !== 200) throw new Error("Ошибка при создании файла")
-
-            const blob = response.data
-            const url = window.URL.createObjectURL(blob)
-            const a = document.createElement("a")
-            a.href = url
-            a.download = `Аннотация_ДОП.docx`
-            document.body.appendChild(a)
-            a.click()
-            window.URL.revokeObjectURL(url)
-        } catch (error) {
-            console.error("Ошибка скачивания файла:", error)
-        }
-    }
-
-    const handleSelectChange = (val, field) => {
-        handleInputChange({ target: { value: val.value, name: field } })
-    }
-
-    const handleInputChange = (e) => {
-        const { name, value } = e.target
-
-        setDocumentsData(prev => {
-            const updated = { ...prev }
-
-            const updateNestedData = (obj, path, val) => {
-                const keys = path.split('.')
-                const lastKey = keys.pop()
-                const nested = keys.reduce((acc, key) => {
-                    if (!acc[key]) acc[key] = {}
-                    return acc[key]
-                }, obj)
-                nested[lastKey] = val ?? '' // если null — ставим ''
-            }
-
-            // Решаем, куда писать: в commonData или в annotation
-            if (
-                name.startsWith('annotation')
-            ) {
-                const path = name.replace(/^annotation\./, '')
-                updateNestedData(updated.annotation, path, value)
-            } else if (
-                name.startsWith('commonData')
-            ) {
-                const path = name.replace(/^commonData\./, '')
-                updateNestedData(updated.commonData, path, value)
-            }
-
-            // Проверяем формат заполнения Benefits
-            if (annotationData.program.benefits) {
-                const firstWord = annotationData.program.benefits.trim().split(' ')[0]
-                const isInfinitive = /(ть|ти|чь|ться)$/.test(firstWord)
-                firstWord && !isInfinitive ? setBenefitsAlert(true) : setBenefitsAlert(false)
-            }
-            else
-                setBenefitsAlert(false)
-
-            console.log(commonData)
-
-
-            // Выставляем статус "Редактируется"
-            if (!isChecking)
-                onChange(name)
-            return updated
-        })
-    }
 
     const validateForm = () => {
         const errors = {}
@@ -255,6 +118,166 @@ const AnnotationForm = ({ userData, requestID, documentsData, setDocumentsData, 
         setTechnologyValidationErrors(technologyErrors)
         return Object.keys(errors).length === 0 && Object.keys(technologyErrors).length === 0
     }
+    //#endregion
+
+    //#region TECHNOLOGIES
+
+    const handleTechnologyChange = (index, updatedTechnology) => {
+        const newTechnologies = [...technologies]
+        newTechnologies[index] = updatedTechnology
+        setTechnologies(newTechnologies)
+        setDocumentsData(prev => ({
+            ...prev,
+            annotation: {
+                ...prev.annotation,
+                technologies: newTechnologies
+            }
+        }))
+        onChange()
+    }
+
+    const handleAddTechnology = () => {
+        const newTechnologies = [...technologies, { name: '' }]
+        setTechnologies(newTechnologies)
+        setDocumentsData(prev => ({
+            ...prev,
+            annotation: {
+                ...prev.annotation,
+                technologies: newTechnologies
+            }
+        }))
+        onChange()
+    }
+
+    const handleRemoveTechnology = (index) => {
+        const newTechnologies = technologies.filter((_, i) => i !== index)
+        setTechnologies(newTechnologies)
+        setDocumentsData(prev => ({
+            ...prev,
+            annotation: {
+                ...prev.annotation,
+                technologies: newTechnologies
+            }
+        }))
+        onChange()
+    }
+    //#endregion
+
+    //#region DocxTemplater
+    const handleViewDoc = async () => {
+        try {
+            const response = await exportAnnotation({ annotationData, commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
+
+            const blob = response.data
+            setShowModal(true)
+
+            setTimeout(() => {
+                if (containerRef.current) {
+                    containerRef.current.innerHTML = ""
+                    renderAsync(blob, containerRef.current)
+                }
+            }, 1000)
+        } catch (error) {
+            console.error("Ошибка просмотра документа:", error)
+        }
+    }
+
+    const handleDownload = async () => {
+        try {
+            const response = await exportAnnotation({ annotationData, commonData })
+            if (response.status !== 200) throw new Error("Ошибка при создании файла")
+
+            const blob = response.data
+            const url = window.URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `Аннотация_ДОП.docx`
+            document.body.appendChild(a)
+            a.click()
+            window.URL.revokeObjectURL(url)
+        } catch (error) {
+            console.error("Ошибка скачивания файла:", error)
+        }
+    }
+    //#endregion
+
+    //#region Input
+    const handleSelectChange = (val, field) => {
+        handleInputChange({ target: { value: val.value, name: field } })
+    }
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target
+
+        let val 
+
+        if (numberInputs.includes(name))
+            val = validateNumberInput(value)
+        else
+            val = value
+
+        setDocumentsData(prev => {
+            const updated = { ...prev }
+
+            const updateNestedData = (obj, path, val) => {
+                const keys = path.split('.')
+                const lastKey = keys.pop()
+                const nested = keys.reduce((acc, key) => {
+                    if (!acc[key]) acc[key] = {}
+                    return acc[key]
+                }, obj)
+                nested[lastKey] = val ?? '' // если null — ставим ''
+            }
+
+            // Решаем, куда писать: в commonData или в annotation
+            if (
+                name.startsWith('annotation')
+            ) {
+                const path = name.replace(/^annotation\./, '')
+                updateNestedData(updated.annotation, path, val)
+            } else if (
+                name.startsWith('commonData')
+            ) {
+                const path = name.replace(/^commonData\./, '')
+                updateNestedData(updated.commonData, path, val)
+            }
+
+            // Проверяем формат заполнения Benefits
+            if (annotationData.program.benefits) {
+                const firstWord = annotationData.program.benefits.trim().split(' ')[0]
+                const isInfinitive = /(ть|ти|чь|ться)$/.test(firstWord)
+                firstWord && !isInfinitive ? setBenefitsAlert(true) : setBenefitsAlert(false)
+            }
+            else
+                setBenefitsAlert(false)
+
+            console.log(commonData)
+
+
+            // Выставляем статус "Редактируется"
+            if (!isChecking)
+                onChange(name)
+            return updated
+        })
+    }
+
+    const validateNumberInput = (value) => {
+        // Удаляем все не-цифровые символы и возвращаем результат
+        return value.replace(/[^\d]/g, '')
+    }
+    //#endregion
+
+    //#region Submit
+    const sendThisDocument = async () => {
+        const dataToSend = {
+            ...documentsData,
+            ANN: true
+        }
+        setDocumentsData(dataToSend)
+
+        sendDocument(dataToSend, requestID)
+    }
 
 
     const handleSubmit = (e) => {
@@ -263,6 +286,7 @@ const AnnotationForm = ({ userData, requestID, documentsData, setDocumentsData, 
         sendThisDocument()
         onSave()
     }
+    //#endregion
 
     return (
         <Container className="mt-4">

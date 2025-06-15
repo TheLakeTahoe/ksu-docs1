@@ -5,6 +5,19 @@ const { QueryTypes } = require('sequelize')
 const db = require('../db.js')
 
 class DocumentController {
+    constructor() {
+        this.getDocumentsData = this.getDocumentsData.bind(this)
+        this.exportAnnotation = this.exportAnnotation.bind(this)
+        this.exportEducationalPlan = this.exportEducationalPlan.bind(this)
+        this.exportEducationalAndThematicPlan = this.exportEducationalAndThematicPlan.bind(this)
+        this.exportEnsuringTheEducationalProccess = this.exportEnsuringTheEducationalProccess.bind(this)
+        this.exportInformationAboutStaffing = this.exportInformationAboutStaffing.bind(this)
+        this.sendDocument = this.sendDocument.bind(this)
+        this.sendDocumentsGroup = this.sendDocumentsGroup.bind(this)
+        this.goToEditState = this.goToEditState.bind(this)
+        this.goToNextState = this.goToNextState.bind(this)
+        this.goToRejectState = this.goToRejectState.bind(this)
+    }
     async getDocumentsData(req, res) {
         try {
             const { requestID } = req.body
@@ -24,7 +37,7 @@ class DocumentController {
         }
     }
 
-    // EXPORT BLOCK (DONE!)
+    // EXPORT BLOCK
     async exportAnnotation(req, res) {
         try {
             const { annotationData, commonData } = req.query.formValues
@@ -317,7 +330,15 @@ class DocumentController {
     async sendDocument(req, res) {
         try {
             const { dataToSend, requestID } = req.body
-            if (!dataToSend?.controlForm) dataToSend.controlForm = 'Отсутствует'
+
+            if (dataToSend.commonData?.modules) {
+                for (const module of dataToSend.commonData.modules) {
+                    if (module.teacher) {
+                        await this.processTeacher(module.teacher);
+                    }
+                }
+            }
+
             let documentID
             const checkDocument = await db.query(`Select primary_form_id, documents_id From document_groups
                                                   Where primary_form_id=$1
@@ -325,7 +346,7 @@ class DocumentController {
                 bind: [requestID],
                 type: QueryTypes.SELECT
             })
-            console.log(checkDocument)
+
             if (checkDocument.length === 1) {
                 const newDocument = await db.query(`Insert Into documents(data, created, updated)
                                                     Values($1, Now(), Now())
@@ -361,6 +382,100 @@ class DocumentController {
         } catch (error) {
             console.error('Ошибка при отправке документа:', error)
             res.status(500).send('Ошибка при отправке документа')
+        }
+    }
+
+    async processTeacher(teacherData) {
+        if (!teacherData?.full_name) return;
+
+        // Проверяем существование преподавателя
+        const existingTeacher = await db.query(
+            `Select id From teachers 
+            Where Trim(full_name) = Trim($1) 
+            Limit 1`,
+            {
+                bind: [teacherData.full_name],
+                type: QueryTypes.SELECT
+            }
+        );
+
+        if (existingTeacher.length > 0) {
+            // Обновляем существующего преподавателя
+            await db.query(
+                `Update teachers 
+                Set exp_total = $1,
+                exp_subject = $2,
+                institution = $3,
+                degree = $4,
+                contract = $5,
+                workplace_id = (Select id From workplaces 
+                                Where name = $6 
+                                Limit 1),
+                position_id  = (Select id From positions 
+                                Where name = $7 
+                                Limit 1)
+                Where id = $8`,
+                {
+                    bind: [
+                        teacherData.exp_total,
+                        teacherData.exp_subject,
+                        teacherData.institution,
+                        teacherData.degree,
+                        teacherData.contract,
+                        teacherData.workplace,
+                        teacherData.position,
+                        existingTeacher[0].id
+                    ],
+                    type: QueryTypes.UPDATE
+                }
+            );
+        } else {
+            // Создаем нового преподавателя
+            // Сначала убедимся, что workplace и position существуют
+            await db.query(
+                `Insert Into workplaces (name) 
+                Values ($1) 
+                On Conflict (name) Do Nothing`,
+                {
+                    bind: [teacherData.workplace],
+                    type: QueryTypes.INSERT
+                }
+            );
+
+            await db.query(
+                `Insert Into positions (name) 
+                Values ($1) 
+                On Conflict (name) Do Nothing`,
+                {
+                    bind: [teacherData.position],
+                    type: QueryTypes.INSERT
+                }
+            );
+
+            // Затем создаем преподавателя
+            await db.query(
+                `Insert Into teachers (full_name, exp_total, exp_subject, institution, degree, contract, workplace_id, position_id)
+                 Values ($1, $2, $3, $4, $5, $6,
+                 (Select id From workplaces 
+                  Where name = $7
+                  Limit 1),
+                 (Select id From positions 
+                  Where name = $8 
+                  Limit 1))`,
+                {
+                    bind: [
+                        teacherData.full_name,
+                        teacherData.exp_total,
+                        teacherData.exp_subject,
+                        teacherData.institution,
+                        teacherData.degree,
+                        teacherData.contract,
+                        teacherData.workplace,
+                        teacherData.position
+                    ],
+                    type: QueryTypes.INSERT
+                }
+            );
         }
     }
 

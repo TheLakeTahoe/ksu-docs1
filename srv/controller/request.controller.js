@@ -358,7 +358,7 @@ class RequestController {
 
             switch (userRoleID) {
                 case 2:
-                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                    query = `Select pf.id, pf.program_name, pf.created As date, account_id as owner,
                             gs.name As status_name, pf.program_description_short As description 
                             From primary_forms pf
                             Inner Join document_groups dg On dg.primary_form_id = pf.id
@@ -369,14 +369,15 @@ class RequestController {
                     break
 
                 case 3:
-                    query = `Select pf.id, pf.program_name, pf.created As date, 
-                            gs.name As status_name, pf.program_description_short As description 
+                    query = `Select pf.id, pf.program_name, pf.created As date, account_id as owner,
+                            gs.name As status_name, pf.program_description_short As description
                             From primary_forms pf
                             Inner Join document_groups dg On dg.primary_form_id = pf.id
                             Inner Join group_statuses gs On gs.id = dg.group_status_id
-                            Inner Join request_steps rs On rs.id = dg.step_id
-                            Where rs.id = 1
+                            Left Join request_steps rs On rs.id = dg.step_id
+                            Where rs.id = 1 Or account_id = $1::Integer
                             Group By pf.id, gs.name`
+                    params = [account_id]
                     break
 
                 case 4:
@@ -391,26 +392,27 @@ class RequestController {
                         return res.json({ userrequests: [] })
                     }
 
-                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                    query = `Select pf.id, pf.program_name, pf.created As date, account_id as owner,
                             gs.name As status_name, pf.program_description_short As description 
                             From primary_forms pf
                             Inner Join document_groups dg On dg.primary_form_id = pf.id
                             Inner Join group_statuses gs On gs.id = dg.group_status_id
-                            Inner Join request_steps rs On rs.id = dg.step_id
-                            Where rs.id = 2 And pf.ksu_department_id = $1::Integer
+                            Left Join request_steps rs On rs.id = dg.step_id
+                            Where (rs.id = 2 And pf.ksu_department_id = $1::Integer) Or account_id = $2::Integer
                             Group By pf.id, gs.name`
-                    params = [getDepartment[0].ksu_department_id]
+                    params = [getDepartment[0].ksu_department_id, account_id]
                     break
 
                 case 5:
-                    query = `Select pf.id, pf.program_name, pf.created As date, 
+                    query = `Select pf.id, pf.program_name, pf.created As date, account_id as owner,
                             gs.name As status_name, pf.program_description_short As description 
                             From primary_forms pf
                             Inner Join document_groups dg On dg.primary_form_id = pf.id
                             Inner Join group_statuses gs On gs.id = dg.group_status_id
-                            Inner Join request_steps rs On rs.id = dg.step_id
-                            Where rs.id = 3
+                            Left Join request_steps rs On rs.id = dg.step_id
+                            Where rs.id = 3 Or account_id = $1::Integer
                             Group By pf.id, gs.name`
+                    params = [account_id]
                     break
 
                 default:

@@ -3,6 +3,7 @@ const router = new Router()
 const dataController = require('../controller/data.controller')
 
 router.get('/get_education', dataController.getEducations)
+router.get('/get_teachers', dataController.getTeachers)
 router.get('/get_ksu_department', dataController.getKSUDeparments)
 router.get('/get_program_type', dataController.getProgramTypes)
 router.get('/get_lesson_shedule', dataController.getLessonShedules)

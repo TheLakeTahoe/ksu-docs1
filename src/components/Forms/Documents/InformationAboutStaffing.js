@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { renderAsync } from 'docx-preview'
 import { exportInformationAboutStaffing, sendDocument } from '../../../http/documentAPI'
 import ReviwerTools from '../../CustomComponents/Other/ReviewerTools'
+import { getAllTeachers } from '../../../http/dataAPI'
 
 const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersList, setTeachersList, setDocumentsData, moduleErrors }) => {
   const teachers = Array.isArray(teachersList) ? teachersList : []
@@ -16,13 +17,52 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
   const [newTeacher, setNewTeacher] = useState({
     full_name: '',
     workplace: '',
-    education: '',
+    position: '',
+    institution: '',
     degree: '',
-    experience_total: '',
-    experience_subject: '',
+    exp_total: '',
+    exp_subject: '',
     contract: ''
   })
 
+  //#region FillingAndValidating
+  const validateModal = () => {
+    const errors = {}
+    const modalErrors = {}
+    if (!newTeacher?.full_name)
+      modalErrors.full_name = 'Поле не заполнено'
+
+    if (!newTeacher?.workplace)
+      modalErrors.workplace = 'Поле не заполнено'
+
+    if (!newTeacher?.position)
+      modalErrors.position = 'Поле не заполнено'
+
+    if (!newTeacher?.institution)
+      modalErrors.institution = 'Поле не заполнено'
+
+    if (!newTeacher?.degree)
+      modalErrors.degree = 'Поле не заполнено'
+
+    if (!newTeacher?.exp_total)
+      modalErrors.exp_total = 'Поле не заполнено'
+
+    if (!newTeacher?.exp_subject)
+      modalErrors.exp_subject = 'Поле не заполнено'
+
+    if (!newTeacher?.contract)
+      modalErrors.contract = 'Поле не заполнено'
+
+    if (Object.keys(modalErrors).length > 0)
+      Object.assign(errors, modalErrors)
+
+    setModalErrors(errors)
+
+    return Object.keys(errors).length === 0
+  }
+  //#endregion
+
+  //#region Input
   const handleSelectChange = (val, field) => {
     if (val.value === '__add__') {
       setShowModal(true)
@@ -37,10 +77,11 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
           teacher: {
             full_name: val.value || '',
             workplace: val.workplace || '',
-            education: val.education || '',
+            institution: val.institution || '',
             degree: val.degree || '',
-            experience_total: val.experience_total || '',
-            experience_subject: val.experience_subject || '',
+            position: val.position || '',
+            exp_total: val.exp_total || '',
+            exp_subject: val.exp_subject || '',
             contract: val.contract || '' // добавь контракт, если есть
           }
         }
@@ -81,52 +122,24 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
     onChange(field)
   }
 
-  const validateModal = () => {
-    const errors = {}
-    const modalErrors = {}
-    if (!newTeacher?.full_name) {
-      modalErrors.full_name = 'Поле не заполнено'
-    }
-    if (!newTeacher?.workplace) {
-      modalErrors.workplace = 'Поле не заполнено'
-    }
-    if (!newTeacher?.education) {
-      modalErrors.education = 'Поле не заполнено'
-    }
-    if (!newTeacher?.degree) {
-      modalErrors.degree = 'Поле не заполнено'
-    }
-    if (!newTeacher?.experience_total) {
-      modalErrors.experience_total = 'Поле не заполнено'
-    }
-    if (!newTeacher?.experience_subject) {
-      modalErrors.experience_subject = 'Поле не заполнено'
-    }
-    if (!newTeacher?.contract) {
-      modalErrors.contract = 'Поле не заполнено'
-    }
-    if (Object.keys(modalErrors).length > 0) {
-      Object.assign(errors, modalErrors)
-    }
-    setModalErrors(errors)
+  //#endregion
 
-    return Object.keys(errors).length === 0
-  }
-
-
+  //#region Submit
   const handleModalSave = () => {
     const newOption = {
       value: newTeacher.full_name, label: newTeacher.full_name, workplace: newTeacher.workplace,
-      education: newTeacher.education, degree: newTeacher.degree, experience_total: newTeacher.experience_total,
-      experience_subject: newTeacher.experience_subject, contract: newTeacher.contract
+      position: newTeacher.position, institution: newTeacher.institution, degree: newTeacher.degree,
+      exp_total: newTeacher.exp_total, exp_subject: newTeacher.exp_subject, contract: newTeacher.contract
     }
     if (!validateModal()) return
     setTeachersList(prev => [...prev, newOption])
 
-    setNewTeacher({ full_name: '', workplace: '', education: '', degree: '', experience_total: '', experience_subject: '', contract: '' })
+    setNewTeacher({ full_name: '', workplace: '', position: '', institution: '', degree: '', exp_total: '', exp_subject: '', contract: '' })
     setShowModal(false)
 
   }
+
+  //#endregion
 
   return (
     <Card className="p-3 mb-4 shadow-sm border border-light-subtle">
@@ -135,7 +148,7 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
       <Row className="mb-3">
         <Col xs={12} md={6}>
           <InputField
-            label="ФИО, должность"
+            label="ФИО"
             value={teachersList.find(option => option.value === module?.teacher?.full_name) || null}
             onChange={(e) => handleSelectChange(e, 'full_name')}
             isSelect
@@ -145,19 +158,29 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
           />
 
           <InputField
-            label="Место работы, должность"
+            label="Место работы"
             value={module?.teacher?.workplace}
             onChange={(e) => handleChange(e, 'workplace')}
             disabled={!isEditable}
             error={moduleErrors[index]?.workplace}
           />
           <InputField
-            label="Учебное заведение, специальность"
-            value={module?.teacher?.education}
-            onChange={(e) => handleChange(e, 'education')}
+            label="Должность"
+            value={module?.teacher?.position}
+            onChange={(e) => handleChange(e, 'position')}
             disabled={!isEditable}
-            error={moduleErrors[index]?.education}
+            error={moduleErrors[index]?.position}
           />
+          <InputField
+            label="Учебное заведение"
+            value={module?.teacher?.institution}
+            onChange={(e) => handleChange(e, 'institution')}
+            disabled={!isEditable}
+            error={moduleErrors[index]?.institution}
+          />
+
+        </Col>
+        <Col xs={12} md={6}>
           <InputField
             label="Ученая степень / звание / категория"
             value={module?.teacher?.degree}
@@ -165,21 +188,19 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
             disabled={!isEditable}
             error={moduleErrors[index]?.degree}
           />
-        </Col>
-        <Col xs={12} md={6}>
           <InputField
             label="Стаж работы (всего)"
-            value={module?.teacher?.experience_total}
-            onChange={(e) => handleChange(e, 'experience_total')}
+            value={module?.teacher?.exp_total}
+            onChange={(e) => handleChange(e, 'exp_total')}
             disabled={!isEditable}
-            error={moduleErrors[index]?.experience_total}
+            error={moduleErrors[index]?.exp_total}
           />
           <InputField
             label="Стаж по дисциплине"
-            value={module?.teacher?.experience_subject}
-            onChange={(e) => handleChange(e, 'experience_subject')}
+            value={module?.teacher?.exp_subject}
+            onChange={(e) => handleChange(e, 'exp_subject')}
             disabled={!isEditable}
-            error={moduleErrors[index]?.experience_subject}
+            error={moduleErrors[index]?.exp_subject}
           />
           <InputField
             label="Условия привлечения"
@@ -193,55 +214,67 @@ const TeachersForm = ({ module, modules, index, isEditable, onChange, teachersLi
         </Col>
       </Row>
       {/* Модальное окно добавления преподавателя */}
-      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size='lg' centered>
         <Modal.Header closeButton>
           <Modal.Title>Добавить преподавателя</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <InputField
-            label="ФИО, должность"
-            value={newTeacher.full_name}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, full_name: e.target.value }))}
-            error={modalErrors?.full_name}
-          />
-          <InputField
-            label="Место работы"
-            value={newTeacher.workplace}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, workplace: e.target.value }))}
-            error={modalErrors?.workplace}
-          />
-          <InputField
-            label="Образование"
-            value={newTeacher.education}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, education: e.target.value }))}
-            error={modalErrors?.education}
-          />
-          <InputField
-            label="Уч. степень / звание"
-            value={newTeacher.degree}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, degree: e.target.value }))}
-            error={modalErrors?.degree}
-          />
-          <InputField
-            label="Стаж общий"
-            value={newTeacher.experience_total}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, experience_total: e.target.value }))}
-            error={modalErrors?.experience_total}
-          />
-          <InputField
-            label="Стаж по дисциплине"
-            value={newTeacher.experience_subject}
-            onChange={(e) => setNewTeacher(prev => ({ ...prev, experience_subject: e.target.value }))}
-            error={modalErrors?.experience_subject}
-          />
-          <InputField
-            label="Условия привлечения"
-            value={contractList.find(option => option.value === newTeacher.contract) || null}
-            isSelect
-            onChange={(val) => setNewTeacher(prev => ({ ...prev, contract: val.value }))}
-            options={contractList}
-            error={modalErrors?.contract}
-          />
+          <Row>
+            <Col md={6}>
+              <InputField
+                label="ФИО"
+                value={newTeacher.full_name}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, full_name: e.target.value }))}
+                error={modalErrors?.full_name}
+              />
+              <InputField
+                label="Место работы"
+                value={newTeacher.workplace}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, workplace: e.target.value }))}
+                error={modalErrors?.workplace}
+              />
+              <InputField
+                label="Должность"
+                value={newTeacher.position}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, position: e.target.value }))}
+                error={modalErrors?.position}
+              />
+              <InputField
+                label="Учебное заведение"
+                value={newTeacher.institution}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, institution: e.target.value }))}
+                error={modalErrors?.institution}
+              />
+            </Col>
+            <Col md={6}>
+              <InputField
+                label="Уч. степень / звание"
+                value={newTeacher.degree}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, degree: e.target.value }))}
+                error={modalErrors?.degree}
+              />
+              <InputField
+                label="Стаж общий"
+                value={newTeacher.exp_total}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, exp_total: e.target.value }))}
+                error={modalErrors?.exp_total}
+              />
+              <InputField
+                label="Стаж по дисциплине"
+                value={newTeacher.exp_subject}
+                onChange={(e) => setNewTeacher(prev => ({ ...prev, exp_subject: e.target.value }))}
+                error={modalErrors?.exp_subject}
+              />
+              <InputField
+                label="Условия привлечения"
+                value={contractList.find(option => option.value === newTeacher.contract) || null}
+                isSelect
+                onChange={(val) => setNewTeacher(prev => ({ ...prev, contract: val.value }))}
+                options={contractList}
+                error={modalErrors?.contract}
+              />
+            </Col>
+          </Row>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>Отмена</Button>
@@ -259,62 +292,79 @@ const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEdita
   const [modules, setModules] = useState([])
   const [moduleErrors, setModuleErrors] = useState({})
   const commonData = documentsData.commonData
-  const [teachersList, setTeachersList] = useState([
-    { value: 'Иванов И.И., доцент', label: 'Иванов И.И., доцент', workplace: 'Работа', education: 'Среднее', degree: 'Крутой', experience_total: '2', experience_subject: '1' },
-    { value: 'Петрова Н.Н., старший преподаватель', label: 'Петрова Н.Н., старший преподаватель' }
-  ])
+  const [teachersList, setTeachersList] = useState([])
 
+  //#region FillingAndValidating
   useEffect(() => {
     if (commonData && Object.keys(commonData?.modules).length > 0)
       setModules(commonData?.modules || [])
   }, [commonData])
 
+  useEffect(() => {
+    const fetchTeachers = async () => {
+      try {
+        const response = await getAllTeachers()
+        const teacherOptions = response.data.map(item => ({
+          value: item.full_name,
+          label: item.full_name,
+          id: item.id,
+          exp_total: item.exp_total || '',
+          exp_subject: item.exp_subject || '',
+          position: item.position || '',
+          degree: item.degree || '',
+          institution: item.institution || '',
+          workplace: item.workplace || '',
+          contract: item.contract || ''
+        }))
+        setTeachersList(teacherOptions)
+
+      } catch (error) {
+        console.error('Ошибка при получении данных о преподавателях:', error)
+      }
+    }
+
+    fetchTeachers()
+  }, [isEditable])
+
   const validateModules = () => {
     const errors = {}
     modules.forEach((module, idx) => {
       const moduleError = {}
-      if (!module?.teacher?.full_name) {
+      if (!module?.teacher?.full_name)
         moduleError.full_name = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.workplace) {
+
+      if (!module?.teacher?.workplace)
         moduleError.workplace = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.education) {
-        moduleError.education = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.degree) {
+
+      if (!module?.teacher?.position)
+        moduleError.position = 'Поле не заполенено'
+
+      if (!module?.teacher?.institution)
+        moduleError.institution = 'Поле не заполнено'
+
+      if (!module?.teacher?.degree)
         moduleError.degree = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.experience_total) {
-        moduleError.experience_total = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.experience_subject) {
-        moduleError.experience_subject = 'Поле не заполнено'
-      }
-      if (!module?.teacher?.contract) {
+
+      if (!module?.teacher?.exp_total)
+        moduleError.exp_total = 'Поле не заполнено'
+
+      if (!module?.teacher?.exp_subject)
+        moduleError.exp_subject = 'Поле не заполнено'
+
+      if (!module?.teacher?.contract)
         moduleError.contract = 'Поле не заполнено'
-      }
-      if (Object.keys(moduleError).length > 0) {
+
+      if (Object.keys(moduleError).length > 0)
         errors[idx] = moduleError
-      }
+
     })
 
     setModuleErrors(errors)
     return Object.keys(errors).length === 0
   }
+  //#endregion
 
-  const sendThisDocument = () => {
-    if (!validateModules()) return
-    const dataToSend = {
-      ...documentsData,
-      IAS: true
-    }
-    setDocumentsData(dataToSend)
-
-    sendDocument(dataToSend, requestID)
-    onSave()
-  }
-
+  //#region DocxTemplater
   const handleViewDoc = async () => {
     try {
       const response = await exportInformationAboutStaffing({ commonData })
@@ -351,6 +401,22 @@ const InformationAboutStaffingForm = ({ documentsData, setDocumentsData, isEdita
       console.error("Ошибка скачивания файла:", error)
     }
   }
+  //#endregion
+
+  //#region Submit
+  const sendThisDocument = () => {
+    if (!validateModules()) return
+    const dataToSend = {
+      ...documentsData,
+      IAS: true
+    }
+    setDocumentsData(dataToSend)
+
+    sendDocument(dataToSend, requestID)
+    onSave()
+  }
+  //#endregion
+
 
   return (
     <Container className='mt-4'>

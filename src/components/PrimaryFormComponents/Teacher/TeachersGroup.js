@@ -1,29 +1,53 @@
-import React from 'react';
-import { Row, Col, Card, Container, Alert } from 'react-bootstrap';
-import TeacherForm from './TeacherForm';
+import { Row, Col, Card, Container, Alert } from 'react-bootstrap'
+import TeacherForm from './TeacherForm'
 
 const TeachersGroup = ({ teachers, teacherOptions, onTeacherChange, onAddTeacher, onRemoveTeacher, teacherErrors, handleTeacherSelectChange, onSelectSpecialValue }) => {
-    return (
-        <Container>
-            {teacherErrors && typeof teacherErrors === 'object' && Object.entries(teacherErrors).map(([index, errors]) => (
-                index !== 'count' ? (
-                    <Alert key={index} variant="danger">
-                        <strong>Преподаватель {Number(index) + 1}:</strong>
+    // Функция для отображения ошибок с использованием switch-case
+    const renderErrorAlert = (errorKey, errors) => {
+        switch(errorKey) {
+            case 'count':
+                return (
+                    <Alert variant="danger">
+                        <strong>Общие ошибки преподавателей:</strong>
+                        <ul className="mb-0">
+                            <li>{errors[0]}</li>
+                        </ul>
+                    </Alert>
+                )
+            case 'duplicates':
+                return (
+                    <Alert variant="warning">
+                        <strong>Обнаружены дубликаты:</strong>
+                        <ul className="mb-0">
+                            {errors.map((err, i) => (
+                                <li key={`dup-${i}`}>{err}</li>
+                            ))}
+                        </ul>
+                    </Alert>
+                )
+            default:
+                return (
+                    <Alert key={errorKey} variant="danger">
+                        <strong>Преподаватель {Number(errorKey) + 1}:</strong>
                         <ul className="mb-0">
                             {errors.teacher && errors.teacher.map((err, i) => (
                                 <li key={`mod-${i}`}>{err}</li>
                             ))}
                         </ul>
                     </Alert>
-                ) : (
-                    <Alert variant="danger">
-                        <strong>Общие ошибки преподавателей:</strong>
-                        <ul className="mb-0">
-                            <li>{teacherErrors.count[0]}</li>
-                        </ul>
-                    </Alert>
                 )
-            ))}
+        }
+    }
+
+    return (
+        <Container>
+            {/* Отображение ошибок */}
+            {teacherErrors && typeof teacherErrors === 'object' && 
+                Object.entries(teacherErrors).map(([key, errors]) => (
+                    renderErrorAlert(key, errors)
+                ))
+            }
+
             <Row className="d-flex flex-wrap">
                 {teachers.map((teacher, index) => (
                     <Col key={index} xs={12} md={4} lg={4} className="mb-4">
@@ -38,6 +62,7 @@ const TeachersGroup = ({ teachers, teacherOptions, onTeacherChange, onAddTeacher
                         />
                     </Col>
                 ))}
+                
                 {teachers.length < 6 && (
                     <Col xs={12} md={4} lg={4}>
                         <Card
@@ -58,7 +83,7 @@ const TeachersGroup = ({ teachers, teacherOptions, onTeacherChange, onAddTeacher
                 )}
             </Row>
         </Container>
-    );
-};
+    )
+}
 
-export default TeachersGroup;
+export default TeachersGroup

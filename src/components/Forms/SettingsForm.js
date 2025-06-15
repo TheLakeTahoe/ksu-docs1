@@ -114,7 +114,7 @@ const SettingsForm = ({ userData }) => {
                     <InputField label="Новый Email" type="email" name="newEmail" value={formData.newEmail} onChange={handleChange} />
                   </Col>
                   <Col md={3}>
-                    <Button variant="primary p-1 mt-1" style={{ backgroundColor: '#1B9AE9', borderColor: '#1B9AE9' }}>Обновить Email</Button>
+                    <Button variant="primary" style={{ backgroundColor: '#1B9AE9', borderColor: '#1B9AE9' }}>Обновить <br/> Email</Button>
                   </Col>
                 </Row>
               </Card>

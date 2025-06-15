@@ -15,12 +15,14 @@ const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onCha
     const [moduleValidationErrors, setModuleValidationErrors] = useState({})
     const containerRef = useRef(null)
     const commonData = documentsData.commonData
+    const numberInputs = ['commonData.hours.academic', 'commonData.lesson.duration', 'commonData.lesson.count']
     const educationFormOptions = [
         { label: 'Очная', value: 'Очная' },
         { label: 'Очно-заочная', value: 'Очно-заочная' },
         { label: 'Заочная', value: 'Заочная' },
     ]
 
+    //#region FillingAndValidating
     useEffect(() => {
         if (commonData && Object.keys(commonData?.modules).length > 0)
             setModules(commonData?.modules || [])
@@ -49,6 +51,164 @@ const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onCha
         }
     }, [commonData?.errors])
 
+    const validateForm = () => {
+        const errors = {}
+        const moduleErrors = {}
+
+        // Проверка основных полей
+        if (!commonData?.program?.program_goal)
+            errors["program_goal"] = "Поле не заполнено"
+
+        if (!commonData?.program?.education_form)
+            errors["education_form"] = "Поле не заполнено"
+
+        if (!commonData?.hours?.academic)
+            errors["academic"] = "Поле не заполнено"
+
+        if (!commonData?.lesson?.count)
+            errors["lesson_count"] = "Поле не заполнено"
+
+        if (!commonData?.lesson?.duration)
+            errors["lesson_duration"] = "Поле не заполнено"
+
+        // Проверка модулей
+        const moduleNames = new Map() // Для проверки дубликатов названий
+
+        modules.forEach((module, index) => {
+            const currentModuleErrors = []
+
+            // Проверка названия модуля
+            if (!module.name?.trim())
+                currentModuleErrors.push("Не указано название модуля")
+            else {
+                // Проверка на дубликаты названий
+                const normalizedName = module.name.trim().toLowerCase()
+                if (moduleNames.has(normalizedName))
+                    moduleNames.set(normalizedName, [...moduleNames.get(normalizedName), index])
+                else
+                    moduleNames.set(normalizedName, [index])
+
+            }
+
+            // Проверка часов
+            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr
+            if (!hasHours)
+                currentModuleErrors.push("Не указаны часы ни в одном из полей")
+
+
+            // Проверка формы контроля
+            if (!module.control_form?.trim())
+                currentModuleErrors.push("Не указана форма контроля")
+
+
+            // Добавляем ошибки модуля
+            if (currentModuleErrors.length > 0) {
+                moduleErrors[index] = {}
+                if (currentModuleErrors.length > 0)
+                    moduleErrors[index].module = currentModuleErrors
+            }
+        })
+
+        // Добавляем ошибки дубликатов названий модулей
+        moduleNames.forEach((indices, name) => {
+            if (indices.length > 1) {
+                if (!moduleErrors.duplicates) moduleErrors.duplicates = []
+                moduleErrors.duplicates.push(
+                    `Название модуля "${name}" повторяется в модулях: ${indices.map(i => i + 1).join(', ')}`
+                )
+            }
+        })
+
+        // Проверка количества модулей
+        if (modules.length < 1)
+            moduleErrors.count = ['Добавьте хотя бы один модуль']
+
+        setValidationErrors(errors)
+        setModuleValidationErrors(moduleErrors)
+        return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0
+    }
+
+    //#endregion
+
+    //#region MODULES
+    const addModule = () => {
+        const newModule = {
+            name: '',
+            h_overall: '',
+            h_lk: '',
+            h_lb: '',
+            h_pr: '',
+            h_sr: '',
+            control_form: ''
+        }
+
+        const updatedModules = [...modules, newModule]
+
+        setDocumentsData(prev => ({
+            ...prev,
+            commonData: {
+                ...prev.commonData,
+                modules: updatedModules
+            },
+            EEP: false,
+            IAS: false
+        }))
+    }
+
+    const removeModule = (index) => {
+        const updatedModules = modules.filter((_, i) => i !== index)
+
+        setDocumentsData(prev => ({
+            ...prev,
+            commonData: {
+                ...prev.commonData,
+                modules: updatedModules
+            },
+            EEP: false,
+            IAS: false
+        }))
+    }
+
+    const handleModuleChange = (index, newData) => {
+        const cleanedData = {
+            ...newData,
+            h_lk: newData.h_lk ? validateNumberInput(newData.h_lk) : '',
+            h_lb: newData.h_lb ? validateNumberInput(newData.h_lb) : '',
+            h_pr: newData.h_pr ? validateNumberInput(newData.h_pr) : '',
+            h_sr: newData.h_sr ? validateNumberInput(newData.h_sr) : ''
+        }
+        const updatedModules = modules.map((module, i) => i === index ? cleanedData : module)
+
+        if (
+            updatedModules[index].h_lk ||
+            updatedModules[index].h_lb ||
+            updatedModules[index].h_pr ||
+            updatedModules[index].h_sr
+        ) {
+            updatedModules[index].h_overall =
+                parseFloat(updatedModules[index].h_lk || 0) +
+                parseFloat(updatedModules[index].h_lb || 0) +
+                parseFloat(updatedModules[index].h_pr || 0) +
+                parseFloat(updatedModules[index].h_sr || 0)
+        }
+
+        setDocumentsData(prev => ({
+            ...prev,
+            commonData: {
+                ...prev.commonData,
+                modules: updatedModules
+            }
+        }))
+    }
+
+
+    const validateNumberInput = (value) => {
+        // Удаляем все не-цифровые символы и возвращаем результат
+        return value.replace(/[^\d]/g, '')
+    }
+    // #endregion
+
+    //#region DocxTemplater
     const handleViewDoc = async () => {
         try {
             const response = await exportEducationPlan({ commonData })
@@ -86,72 +246,22 @@ const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onCha
         }
     }
 
-    const addModule = () => {
-        const newModule = {
-            name: '',
-            h_overall: '',
-            h_lk: '',
-            h_lb: '',
-            h_pr: '',
-            h_sr: '',
-            control_form: ''
-        }
+    //#endregion
 
-        const updatedModules = [...modules, newModule]
-
-        setDocumentsData(prev => ({
-            ...prev,
-            commonData: {
-                ...prev.commonData,
-                modules: updatedModules
-            }
-        }))
-    }
-
-    const removeModule = (index) => {
-        const updatedModules = modules.filter((_, i) => i !== index)
-
-        setDocumentsData(prev => ({
-            ...prev,
-            commonData: {
-                ...prev.commonData,
-                modules: updatedModules
-            }
-        }))
-    }
-
-
-    const handleModuleChange = (index, newData) => {
-        const updatedModules = modules.map((module, i) => i === index ? newData : module)
-
-        if (
-            updatedModules[index].h_lk ||
-            updatedModules[index].h_lb ||
-            updatedModules[index].h_pr ||
-            updatedModules[index].h_sr
-        ) {
-            updatedModules[index].h_overall =
-                parseFloat(updatedModules[index].h_lk || 0) +
-                parseFloat(updatedModules[index].h_lb || 0) +
-                parseFloat(updatedModules[index].h_pr || 0) +
-                parseFloat(updatedModules[index].h_sr || 0)
-        }
-
-        setDocumentsData(prev => ({
-            ...prev,
-            commonData: {
-                ...prev.commonData,
-                modules: updatedModules
-            }
-        }))
-    }
-
+    //#region Input
     const handleSelectChange = (val, field) => {
         handleInputChange({ target: { value: val.value, name: field } })
     }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
+
+        let val
+
+        if (numberInputs.includes(name))
+            val = validateNumberInput(value)
+        else 
+            val = value
 
         setDocumentsData(prev => {
             const updated = { ...prev }
@@ -167,14 +277,16 @@ const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onCha
             }
 
             const path = name.replace(/^commonData\./, '')
-            updateNestedData(updated.commonData, path, value)
+            updateNestedData(updated.commonData, path, val)
 
             // Выставляем статус "Редактируется"
             onChange(name)
             return updated
         })
     }
+    //#endregion
 
+    //#region Submit
     const sendThisDocument = () => {
         const dataToSend = {
             ...documentsData,
@@ -184,72 +296,13 @@ const EducationalPlanForm = ({ requestID, documentsData, setDocumentsData, onCha
         sendDocument(dataToSend, requestID)
     }
 
-    const validateForm = () => {
-        const errors = {}
-        const moduleErrors = {}
-
-        // Проверка основных полей
-        if (!commonData?.program?.program_goal?.trim()) {
-            errors["program_goal"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.program?.education_form) {
-            errors["education_form"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.hours?.academic) {
-            errors["academic"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.lesson?.count) {
-            errors["lesson_count"] = "Поле не заполнено"
-        }
-
-        if (!commonData?.lesson?.duration) {
-            errors["lesson_duration"] = "Поле не заполнено"
-        }
-
-        // Проверка каждого модуля
-        modules.forEach((module, index) => {
-            const currentModuleErrors = []
-
-            if (!module.name?.trim()) {
-                currentModuleErrors.push("Не указано название модуля")
-            }
-
-            const hasHours = module.h_lk || module.h_lb || module.h_pr || module.h_sr
-
-            if (!hasHours) {
-                currentModuleErrors.push("Не указаны часы ни в одном из полей")
-            }
-
-            if (!module.control_form?.trim()) {
-                currentModuleErrors.push("Не указана форма контроля")
-            }
-
-            // Приводим к единой структуре
-            if (currentModuleErrors.length > 0) {
-                moduleErrors[index] = {
-                    module: currentModuleErrors,
-                    submodules: {} // даже если нет подмодулей — для универсального отображения
-                }
-            }
-        })
-
-        if (modules.length < 1)
-            moduleErrors.count = ['Добавьте хотя бы один модуль']
-
-        setValidationErrors(errors)
-        setModuleValidationErrors(moduleErrors)
-        return Object.keys(errors).length === 0 && Object.keys(moduleErrors).length === 0
-    }
-
     const handleSubmit = (e) => {
         e.preventDefault()
         if (!validateForm()) return
         sendThisDocument()
         onSave()
     }
+    //#endregion
 
     return (
         <Container className='mt-4'>

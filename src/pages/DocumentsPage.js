@@ -55,8 +55,6 @@ function DocumentsPage() {
 
   }
 
-  console.log(requestDocuments)
-
   if (!requestID) navigate('/main')
 
   const [tabStates, setTabStates] = useState({
@@ -69,11 +67,11 @@ function DocumentsPage() {
 
   useEffect(() => {
     const updatedTabStates = {
-      1: requestDocuments?.ANN ? 'sent' : 'notSent',
-      2: requestDocuments?.EDP ? 'sent' : 'notSent',
-      3: requestDocuments?.ETP ? 'sent' : 'notSent',
-      4: requestDocuments?.EEP ? 'sent' : 'notSent',
-      5: requestDocuments?.IAS ? 'sent' : 'notSent'
+      1: documentsData?.ANN ? 'sent' : 'notSent',
+      2: documentsData?.EDP ? 'sent' : 'notSent',
+      3: documentsData?.ETP ? 'sent' : 'notSent',
+      4: documentsData?.EEP ? 'sent' : 'notSent',
+      5: documentsData?.IAS ? 'sent' : 'notSent'
     }
     setTabStates(updatedTabStates)
 
@@ -81,7 +79,7 @@ function DocumentsPage() {
       setShowModal(true)
     }
 
-  }, [requestDocuments])
+  }, [documentsData])
 
   // Функция обновления Состояния вкладки
   const updateTabState = (tabKey, state) => {
