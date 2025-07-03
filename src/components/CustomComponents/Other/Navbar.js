@@ -90,7 +90,6 @@ const CustomNavbar = ({ full_name }) => {
 
           {/* Текст с именем пользователя */}
           <Navbar.Text style={{ marginLeft: "20px", fontSize: "14px", color: "#333" }}>
-            <strong>Текущий пользователь:</strong> <br />
             <div style={{ color: "#1B9AE9", textDecoration: "none", fontWeight: "500" }}>
               {full_name}
             </div>

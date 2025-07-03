@@ -111,10 +111,10 @@ const MainContent = () => {
                         {requests.map((request, index) => (
                             <ListGroupItem key={index} style={{ padding: '15px', border: '1px solid #ddd' }}>
                                 <Row>
-                                    <Col md={7} style={{ textAlign: 'left' }}>
+                                    <Col md={9} style={{ textAlign: 'left' }}>
                                             <strong>{request.title}</strong>
                                     </Col>
-                                    <Col md={5} className="d-flex justify-content-between" style={{ color: '#555', textAlign: 'left' }}>
+                                    <Col md={3} className="d-flex justify-content-between" style={{ color: '#555', textAlign: 'left' }}>
                                         <Col>{request.date}</Col>
                                         <Col style={{ textAlign:'right', color: '#1B9AE9' }}>{request.status}</Col>
                                     </Col>
